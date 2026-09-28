@@ -70,11 +70,13 @@ lines += ["", "*Nearest-rank p95 over this small batch; not a reliable productio
     "The native observer samples about every 50 ms and is excluded from process RSS/PSS, but included in cgroup usage. "
     "These runs are separate from timing runs. RSS can double-count shared pages; PSS apportions them. "
     "Sampled peaks are lower bounds on instantaneous peaks. Lifetime per-process high-water marks are also retained in JSON.", "",
-    "| Workload | Engine | Baseline RSS MiB | Sampled peak RSS MiB | Sampled peak PSS MiB | Cgroup peak since restart MiB |",
-    "|---|---|---:|---:|---:|---:|"]
+    "| Workload | Engine | Baseline RSS MiB | Sampled peak RSS MiB | Sum process HWM MiB* | Sampled peak PSS MiB | Cgroup peak since restart MiB |",
+    "|---|---|---:|---:|---:|---:|---:|"]
 for item in r["memory"]:
     lines.append(f"| {item['workload']} | {item['engine']} | {item['baseline']['rss_bytes']/1024**2:.1f} | "
-        f"{item['peaks']['rss_bytes']/1024**2:.1f} | {item['peaks']['pss_bytes']/1024**2:.1f} | {item['peaks']['cgroup_peak_bytes']/1024**2:.1f} |")
+        f"{item['peaks']['rss_bytes']/1024**2:.1f} | {item['peaks']['sum_process_hwm_bytes']/1024**2:.1f} | {item['peaks']['pss_bytes']/1024**2:.1f} | {item['peaks']['cgroup_peak_bytes']/1024**2:.1f} |")
+lines += ["", "*HWM is the kernel's lifetime resident high-water mark for each process, summed across engine processes. "
+    "For a multi-process engine those individual peaks need not coincide. It is additional evidence, not a simultaneous total peak."]
 lines += ["", "Cgroup accounting includes startup and filesystem cache, and shared mapped pages can be charged to other cgroups. "
     "It is not interchangeable with RSS or PSS. Baseline and query resident memory can also reflect earlier readiness work.", "",
     "RSS is the approximate Linux VmRSS counter; PSS comes from smaps_rollup. They are read sequentially, "
@@ -99,6 +101,10 @@ lines += ["", "Neura records source-specific payload bytes, not uniform network/
     "Neura currently resolves their metadata during each referenced-source setup.", "",
     "## Interpretation limits", ""]
 lines += ["- " + note for note in r["notes"]]
+lines += ["- Eight workloads on a synthetic million-row fixture do not establish universal superiority, distributed scaling, "
+    "production sizing, full SQL/type equivalence or cloud warehouse behavior.",
+    "- PostgreSQL grants/RLS are tested. Source data stays unchanged during measurement; "
+    "this does not prove equal snapshot guarantees under concurrent writes. No governance shortcuts or privileged reader are used.", ""]
 if a.cache:
     cached = json.loads(a.cache.read_text())
     cached_checks = cached["samples"] + cached["primes"] + [s for t in cached["throughput"] for s in t["samples"]] + [s for m in cached["memory"] for s in m["checks"]]
@@ -127,11 +133,9 @@ if a.cache:
     lines += ["", "The same separate memory-pass caveats apply. The cache profile remains a static-fixture test; "
         "permission revocation, cache invalidation under updates, large working sets, and equal end-user governance have not been certified.", "",
         f"[Cache-profile raw observations]({a.cache.name})", ""]
-lines += ["- Eight workloads on a synthetic million-row fixture do not establish universal superiority, distributed scaling, "
-    "production sizing, full SQL/type equivalence or cloud warehouse behavior.",
-    "- PostgreSQL grants/RLS are tested. Source data stays unchanged during measurement; "
-    "this does not prove equal snapshot guarantees under concurrent writes. No governance shortcuts or privileged reader are used.", "",
-    f"[Raw observations]({a.input.name}) · [Reproduction](../../benchmarks/COMPARE.md)", ""]
+lines += ["",
+    f"[Raw observations]({a.input.name}) · [Reproduction](../../benchmarks/COMPARE.md)", "",
+    "[Warm-latency chart](spark-duckdb-latency.png) · [Memory chart](spark-duckdb-memory.png)", ""]
 a.output.parent.mkdir(parents=True, exist_ok=True)
 a.output.write_text("\n".join(lines))
 print(a.output)

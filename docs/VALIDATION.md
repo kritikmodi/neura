@@ -43,6 +43,26 @@ Use read-only principals with deliberately denied tables and known reference res
 
 ## Benchmark interpretation
 
+The newer [Neura/Spark/DuckDB suite](benchmark-results/2026-09-28-spark-duckdb.md)
+uses the unchanged Neura engine, Spark 3.5.6 and DuckDB 1.5.5. **375/375** baseline
+query-result checks passed (144 timed samples, 33 priming queries, 180 throughput
+requests and 18 separate memory-pass queries). A separately labelled DuckDB
+default-file-cache profile passed **97/97** checks. All engines passed real
+PostgreSQL RLS and forbidden-table probes with source-log evidence. The suite
+compares two Parquet layouts, eight workloads, concurrency two, and separately
+sampled process RSS/PSS/high-water marks and cgroup memory. No engine implementation
+was changed for this experiment. Python syntax checks and native C observer
+compilation with warnings as errors passed. Charts were rendered and inspected.
+
+The local million-group aggregate was 57.7 ms warm in Neura, 59.7 ms in uncached
+DuckDB and 403.4 ms in Spark. Neura's full S3 join changed from 15.9 s to 260 ms
+when the same rows used larger row groups. DuckDB's default external file cache
+reduced its warm small-row-group join to 19.1 ms; its process-cold query remained
+20.5 s. These cache modes are explicitly separate. Source fixtures each have a
+1 CPU / 512 MiB limit; S3 saturation was observed during uncached DuckDB throughput.
+This is a constrained-storage service experiment, not an isolated engine or
+latest-Spark comparison. Historical results below remain unchanged.
+
 The published baseline predates the REST-only default and used the wire compatibility path. Historical results are unchanged. The current harness uses Neura REST with bearer authentication and records client protocol metadata; no new performance or memory improvement is inferred from removing the optional listener.
 
 The reproducible harness and exact workload definitions are in `benchmarks/`. [Published measurements](benchmark-results/2026-09-28.md) include raw samples, image/source fingerprints and a separate idle RSS observation. All 90 latency samples and 30 throughput requests passed independent correctness checks. Each engine uses 2 CPUs and 2 GiB RAM with no additional swap. The same restricted source accounts, immutable fixture files and relational SQL are used.

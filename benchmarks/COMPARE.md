@@ -69,6 +69,10 @@ Spark/DuckDB use the same minimal Python adapter returning JSON. Adapters and au
 implementations differ, so short-query times include those differences. The adapter
 accepts only exact benchmark and probe SQL, listens on a localhost-published port,
 and is a fixture utility, not a Neura connector or production service.
+Memory includes these runtimes too: Neura's HTTP server is native Rust, while the
+Spark/DuckDB measurements include their Python adapter. This is not an isolated
+execution-library footprint comparison. Source-container image identities and
+limits are recorded separately; the published run used 1 CPU / 512 MiB per source.
 
 Throughput uses a finite batch of 20 queries at concurrency two for three workloads.
 It is not an open-loop saturation test; a p95 from 20 observations is not a stable
@@ -104,6 +108,8 @@ three-engine suite finishes, run:
 ```sh
 source scripts/test-env.sh
 python3 benchmarks/cache_compare.py
+python3 benchmarks/summarize_compare.py results/spark-duckdb.json results/spark-duckdb.md --cache results/duckdb-file-cache.json
+uv run --with matplotlib==3.10.6 benchmarks/plot_compare.py results/spark-duckdb.json results/plots --cache results/duckdb-file-cache.json
 ```
 
 This creates a separate `neura-cache-duckdb` container on localhost port 58104 with

@@ -156,6 +156,12 @@ def main():
     # Avoid dumping unrelated Docker configuration into the published report.
     report["docker"] = {k: report["docker"].get(k) for k in
         ["ServerVersion", "KernelVersion", "OperatingSystem", "Architecture", "NCPU", "MemTotal"]}
+    report["source_containers"] = {}
+    for name in ("neura-test-postgres-1", "neura-test-s3-1"):
+        info = json.loads(docker("inspect", name))[0]
+        report["source_containers"][name] = {"image": info["Config"]["Image"], "image_id": info["Image"],
+            "cpu_limit": info["HostConfig"]["NanoCpus"] / 1e9,
+            "memory_limit_bytes": info["HostConfig"]["Memory"], "restart_count_at_start": info["RestartCount"]}
     report["duckdb_extension_sha256"] = {str(p.relative_to(ROOT / "target/duckdb-extensions")):
         hashlib.sha256(p.read_bytes()).hexdigest() for p in (ROOT / "target/duckdb-extensions").rglob("*.duckdb_extension")}
     args.output.parent.mkdir(parents=True, exist_ok=True)

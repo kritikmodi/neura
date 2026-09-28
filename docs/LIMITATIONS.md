@@ -17,3 +17,14 @@ This is an initial working engine, not a production equivalence claim for Postgr
 * **Performance results are workload-specific.** The benchmark fixture is synthetic, single-node and local S3-compatible storage. Small Parquet row groups can cause hundreds of remote range requests per file; cross-row-group read-ahead is not implemented. Row-level late materialization is opt-in because it can increase request counts on low-selectivity scans. Process-cold runs retain source/OS caches; true storage-cold runs were not performed. It does not establish cloud egress economics, distributed scaling, production latency, or universal superiority. Cgroup memory and the separately reported idle process-RSS snapshot have different accounting, and neither is a per-query unique-memory peak.
 
 Before a production release: complete cloud tests with restricted principals; validate source schema/type contracts; certify Iceberg delete/partition-evolution cases; add delegated identity and TLS deployment tests; load-test hard memory/disk bounds and slow/disconnected clients; broaden dialect correctness workloads; and independently reproduce benchmark results at representative scale.
+
+The [Spark/DuckDB comparison](benchmark-results/2026-09-28-spark-duckdb.md) reinforces
+these performance limits: Neura is competitive on the measured local aggregation,
+but small S3 row groups produce excessive requests, and it lacks DuckDB's default
+external-file-cache behavior for repeated queries. The fixture fits easily in the
+cache budget. Lower observed Neura RSS in these cases is not a universal memory
+claim: measurements include different service runtimes, sample at roughly 50 ms,
+and the recorded process high-water marks can exceed sampled peaks. Spark 3.5.6
+was used, not the latest Spark release. The S3-compatible source itself reached
+its CPU cap in an observed throughput interval. Static-fixture permission checks
+do not establish equivalent cache invalidation or concurrent-write snapshots.
