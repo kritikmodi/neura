@@ -77,7 +77,6 @@ query_timeout_secs=60
 spill_dir="/tmp/neura-test-spill"
 [server]
 http_addr="127.0.0.1:58080"
-pg_addr="127.0.0.1:55433"
 [[sources]]
 name="pg"
 kind="postgres"

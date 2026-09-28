@@ -6,14 +6,15 @@ Validation performed on 2026-09-28 in the separate `/Users/kritikmodi/Neura` rep
 
 | Check | Evidence / scope |
 |---|---|
-| Unit tests | 12 tests: read-only SQL (including nested DML), parameter injection, strict Arrow decoding, decimal precision, snapshot SQL ASTs, pinned object ETags, diagnostics and stream-drop cancellation |
+| Unit tests | Default build: 14 library tests plus two connector/config tests; optional wire adds its parameter test. Includes read-only SQL (including nested DML), parameter injection, strict Arrow decoding, decimal precision, snapshot SQL ASTs, pinned object ETags, diagnostics and stream-drop cancellation |
 | Actual PostgreSQL × S3 | Five integration tests against PostgreSQL 17.6 and SeaweedFS 3.94: correct federated aggregation, remote projection/filter/aggregation, Parquet pruning (at most 1,024 scanned rows and fewer than 30 storage requests for `order_id<1000`), RLS, denied-table and denied-S3-bucket access, concurrency admission, cancellation of an active remote PostgreSQL statement and repeatable-read isolation during a concurrent update |
+| Actual ClickHouse | Four live tests against ClickHouse 25.8.4.13: restricted reader and tenant row policy, denied table, remote projection/filter/aggregation, exact types/NULL/empty results, outer joins, three-source PostgreSQL/S3 join, rejection of split source snapshots, 200,000 rows streamed at the default 4,096-row batch size through a 1 MiB frame cap, active remote query cancellation, oversized-frame rejection, source write rejection and enforcement of source resource constraints |
 | Actual Iceberg | Local v2 metadata, Avro manifests and Parquet data: pinned historical snapshot, append, field-ID rename, copy-on-write delete, and combined position/equality delete files; old snapshot remains unchanged |
 | Actual spill | Four million generated integer rows sorted with a 64 MiB shared operator pool and 32 MiB sort merge reservation; every row's ordering, count, sum and nonzero physical-plan spill metrics checked |
-| Cube / PostgreSQL wire | Actual `@cubejs-backend/postgres-driver@1.6.57` and `pg@8.16.3`: Cube `testConnection`, session settings, extended-query binding, injection resistance, read-only rejection, RLS and federated aggregation |
+| Optional Cube / PostgreSQL wire | `postgres-wire` is opt-in; actual `@cubejs-backend/postgres-driver@1.6.57` and `pg@8.16.3`: Cube `testConnection`, session settings, extended-query binding, injection resistance, read-only rejection, RLS and federated aggregation |
 | REST | Actual running service: bearer authentication, NDJSON schema/rows/completion, diagnostics lookup and mutation rejection |
-| Docker | Linux arm64 release binary compiled inside the pinned Rust container, packaged with the runtime Dockerfile, run as UID/GID 10001, and verified by an actual PostgreSQL × S3 CLI query. The low-Docker-disk build path was used; the main multi-stage recipe was not separately completed |
-| Static checks | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, Python syntax compilation |
+| Docker | Linux arm64 release binary compiled inside the pinned Rust container, packaged with the runtime Dockerfile, run as UID/GID 10001, and verified by an actual PostgreSQL × S3 CLI query. The REST-only default was also built and its five benchmark workloads checked through the HTTP client (correctness checks only, not a new timing comparison). Local Docker VM disk exhaustion required a workspace-backed temporary/spill directory for the demo. The low-Docker-disk build path was used; the main multi-stage recipe was not separately completed |
+| Static checks | `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` with default and `postgres-wire` features, Python/shell syntax checks |
 
 The PostgreSQL/S3 integration was exercised with both the original 10,000-row fixture and the later 1,000,000-row benchmark fixture. SeaweedFS is a real S3-compatible object service; these tests do **not** certify Amazon S3 IAM, STS or Glue behavior. Cube compatibility covers its driver/query path, not a deployed Cube application, pre-aggregations, every introspection endpoint or every PostgreSQL type.
 
@@ -30,7 +31,9 @@ No cloud credentials were available. `cloud_connectors` is explicitly ignored un
 | Snowflake | Account host, warehouse, database/schema, read-only role, `SNOWFLAKE_TOKEN` (or file), timestamp within retention | SQL API execution, policy enforcement, partitions, cancellation, token expiry, numeric/timestamp decoding and time travel |
 | BigQuery | Project/location, `BIGQUERY_TOKEN` (or file), dataset/table, retained timestamp, billing ceiling | Query/poll/page APIs, policy tags/row policies, cancellation, token expiry, decoded types, bytes-billed ceiling and time travel |
 
-The connectors use real vendor APIs and compile; no cloud acceptance result is implied by that fact. Snapshot-clause and decoder unit tests are not substitutes for these live tests. Consult `examples/sources.toml`, then explicitly run:
+ClickHouse Cloud and distributed deployments are also untested; local ClickHouse has a real integration fixture and does not need cloud credentials.
+
+The cloud connectors use real vendor APIs and compile; no cloud acceptance result is implied by that fact. Snapshot-clause and decoder unit tests are not substitutes for these live tests. Consult `examples/sources.toml`, then explicitly run:
 
 ```sh
 NEURA_CLOUD_CONFIG=/secure/path/cloud.toml cargo test --test federation cloud_connectors -- --ignored --nocapture
@@ -39,6 +42,8 @@ NEURA_CLOUD_CONFIG=/secure/path/cloud.toml cargo test --test federation cloud_co
 Use read-only principals with deliberately denied tables and known reference results when expanding the acceptance suite. A failed permission test must never be “fixed” by increasing that principal's privileges.
 
 ## Benchmark interpretation
+
+The published baseline predates the REST-only default and used the wire compatibility path. Historical results are unchanged. The current harness uses Neura REST with bearer authentication and records client protocol metadata; no new performance or memory improvement is inferred from removing the optional listener.
 
 The reproducible harness and exact workload definitions are in `benchmarks/`. [Published measurements](benchmark-results/2026-09-28.md) include raw samples, image/source fingerprints and a separate idle RSS observation. All 90 latency samples and 30 throughput requests passed independent correctness checks. Each engine uses 2 CPUs and 2 GiB RAM with no additional swap. The same restricted source accounts, immutable fixture files and relational SQL are used.
 

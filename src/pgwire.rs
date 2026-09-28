@@ -415,7 +415,15 @@ pub async fn serve(engine: Arc<Engine>) -> anyhow::Result<()> {
         user: engine.config.server.pg_user.clone(),
         password,
     });
-    let listener = tokio::net::TcpListener::bind(&engine.config.server.pg_addr).await?;
+    let listener = tokio::net::TcpListener::bind(
+        engine
+            .config
+            .server
+            .pg_addr
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("pg_addr missing"))?,
+    )
+    .await?;
     let slots = Arc::new(tokio::sync::Semaphore::new(
         engine.config.limits.max_connections,
     ));

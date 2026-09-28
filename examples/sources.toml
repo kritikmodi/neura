@@ -12,7 +12,6 @@ spill_dir="/var/lib/neura/spill"
 [server]
 # Container listeners must sit behind a TLS proxy, on a private network.
 http_addr="0.0.0.0:8080"
-pg_addr="0.0.0.0:5433"
 allow_insecure_network=true
 [[sources]]
 name="pg"

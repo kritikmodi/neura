@@ -4,5 +4,6 @@ pub mod config;
 pub mod connectors;
 pub mod engine;
 pub mod metrics;
+#[cfg(feature = "postgres-wire")]
 pub mod pgwire;
 pub mod security;

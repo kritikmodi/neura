@@ -185,7 +185,7 @@ pub fn execute(
     let out = schema.clone();
     let stream = async_stream::try_stream! {
      let result:Result<_>=async {
-      let name=&remote.source.name;let http=&remote.http;let metrics=&remote.metrics;
+      let name=&remote.source.name;let http=remote.http.as_ref().ok_or_else(|| df_error("warehouse client missing"))?;let metrics=&remote.metrics;
       let (base,token,body,url)=match &remote.source.connection{
        Connection::Databricks{host,warehouse_id,token_env}=>{let b=host.trim_end_matches('/').to_string();(b.clone(),secret(token_env)?,json!({"warehouse_id":warehouse_id,"statement":query,"format":"JSON_ARRAY","disposition":"INLINE","wait_timeout":"0s","on_wait_timeout":"CONTINUE","byte_limit":25*1024*1024}),format!("{b}/api/2.0/sql/statements"))},
        Connection::Snowflake{host,warehouse,database,schema,role,token_env}=>{let b=host.trim_end_matches('/').to_string();(b.clone(),secret(token_env)?,json!({"warehouse":warehouse,"database":database,"schema":schema,"role":role,"statement":query,"timeout":remote.limits.query_timeout_secs,"parameters":{"MULTI_STATEMENT_COUNT":"1","TIMEZONE":"UTC","DATE_OUTPUT_FORMAT":"YYYY-MM-DD","TIMESTAMP_NTZ_OUTPUT_FORMAT":"YYYY-MM-DD\"T\"HH24:MI:SS.FF6","TIMESTAMP_LTZ_OUTPUT_FORMAT":"YYYY-MM-DD\"T\"HH24:MI:SS.FF6TZH:TZM","TIMESTAMP_TZ_OUTPUT_FORMAT":"YYYY-MM-DD\"T\"HH24:MI:SS.FF6TZH:TZM"}}),format!("{b}/api/v2/statements?async=true"))},
@@ -204,7 +204,7 @@ pub fn execute(
       Ok((base,token,value,poll,id,job))
      }.await;
      let (base,token,mut value,poll,id,mut job)=result.map_err(df_error)?;
-     let name=&remote.source.name;let http=&remote.http;let metrics=&remote.metrics;
+     let name=&remote.source.name;let http=remote.http.as_ref().ok_or_else(|| df_error("warehouse client missing"))?;let metrics=&remote.metrics;
      loop {
       if remote.cancel.is_cancelled(){Err(df_error("query cancelled"))?;}
       let ready=match remote.source.connection {

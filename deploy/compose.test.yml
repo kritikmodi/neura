@@ -20,3 +20,21 @@ services:
     volumes: ["./s3.test.json:/etc/neura-s3.json:ro", "../data/s3:/data"]
     mem_limit: 512m
     cpus: 1
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8.4.13
+    environment:
+      CLICKHOUSE_USER: fixture_admin
+      CLICKHOUSE_PASSWORD: neura-test-clickhouse-admin
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports: ["127.0.0.1:58123:8123"]
+    volumes:
+      - "./clickhouse/config.xml:/etc/clickhouse-server/config.d/neura.xml:ro"
+      - "./clickhouse/init.sql:/docker-entrypoint-initdb.d/01-neura.sql:ro"
+      - "../data/clickhouse:/var/lib/clickhouse"
+      - "../data/clickhouse-logs:/var/log/clickhouse-server"
+    mem_limit: 1g
+    cpus: 1
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "fixture_admin", "--password", "neura-test-clickhouse-admin", "--query", "SELECT 1"]
+      interval: 2s
+      retries: 30

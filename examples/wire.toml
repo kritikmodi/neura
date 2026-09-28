@@ -1,0 +1,7 @@
+# Only needed for Cube's PostgreSQL driver / psql; cargo build --features postgres-wire.
+# Source connectors work in every build, independently of this optional listener.
+[server]
+http_addr = "127.0.0.1:8080"
+pg_addr = "127.0.0.1:5433"
+pg_user = "neura"
+pg_password_env = "NEURA_PG_PASSWORD"

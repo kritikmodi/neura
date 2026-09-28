@@ -52,7 +52,8 @@ impl Default for Limits {
 #[serde(default, deny_unknown_fields)]
 pub struct Server {
     pub http_addr: String,
-    pub pg_addr: String,
+    /// Requires the optional postgres-wire build feature; disabled unless configured.
+    pub pg_addr: Option<String>,
     pub token_env: String,
     pub pg_user: String,
     pub pg_password_env: String,
@@ -62,7 +63,7 @@ impl Default for Server {
     fn default() -> Self {
         Self {
             http_addr: "127.0.0.1:8080".into(),
-            pg_addr: "127.0.0.1:5433".into(),
+            pg_addr: None,
             token_env: "NEURA_API_TOKEN".into(),
             pg_user: "neura".into(),
             pg_password_env: "NEURA_PG_PASSWORD".into(),
@@ -85,6 +86,15 @@ pub enum Connection {
         dsn_env: String,
         #[serde(default)]
         allow_insecure: bool,
+    },
+    Clickhouse {
+        endpoint: String,
+        user: String,
+        password_env: String,
+        #[serde(default)]
+        allow_http: bool,
+        /// Explicit acknowledgement of native statement-level consistency.
+        consistency: String,
     },
     S3 {
         bucket: String,
@@ -130,6 +140,7 @@ impl Connection {
     pub fn kind(&self) -> &'static str {
         match self {
             Self::Postgres { .. } => "postgres",
+            Self::Clickhouse { .. } => "clickhouse",
             Self::S3 { .. } => "s3",
             Self::Parquet { .. } => "parquet",
             Self::Iceberg { .. } => "iceberg",
@@ -242,6 +253,33 @@ impl Config {
             }
             ensure!(sources.insert(&s.name), "duplicate source");
             match &s.connection {
+                Connection::Clickhouse {
+                    endpoint,
+                    user,
+                    password_env,
+                    allow_http,
+                    consistency,
+                } => {
+                    let u = url::Url::parse(endpoint)?;
+                    ensure!(
+                        (u.scheme() == "https" || (*allow_http && u.scheme() == "http"))
+                            && u.host_str().is_some()
+                            && u.username().is_empty()
+                            && u.password().is_none()
+                            && u.path() == "/"
+                            && u.query().is_none()
+                            && u.fragment().is_none(),
+                        "ClickHouse endpoint must be an HTTPS origin without credentials; allow_http is for private test networks only"
+                    );
+                    ensure!(
+                        !user.is_empty() && !password_env.is_empty(),
+                        "ClickHouse user and password_env required"
+                    );
+                    ensure!(
+                        consistency == "statement",
+                        "ClickHouse requires consistency=statement; repeatable-read and time travel are unavailable"
+                    );
+                }
                 Connection::S3 { governance, .. } | Connection::Glue { governance, .. } => ensure!(
                     governance == "iam_only",
                     "S3/Glue require explicit governance=iam_only; Lake Formation governed access is unsupported and must not use direct S3 reads"
@@ -271,6 +309,7 @@ impl Config {
                 }
                 match &s.connection {
                     Connection::Postgres { .. }
+                    | Connection::Clickhouse { .. }
                     | Connection::Databricks { .. }
                     | Connection::Snowflake { .. }
                     | Connection::Bigquery { .. } => {
@@ -290,7 +329,22 @@ impl Config {
                                 identifier(part)?;
                             }
                         }
-                        if !matches!(s.connection, Connection::Postgres { .. }) {
+                        if matches!(s.connection, Connection::Clickhouse { .. }) {
+                            ensure!(
+                                r.split('.').count() == 2,
+                                "ClickHouse remote must be database.table"
+                            );
+                            ensure!(
+                                t.snapshot.is_none() && t.snapshot_id.is_none(),
+                                "ClickHouse snapshot pinning is unsupported"
+                            );
+                        }
+                        if matches!(
+                            s.connection,
+                            Connection::Databricks { .. }
+                                | Connection::Snowflake { .. }
+                                | Connection::Bigquery { .. }
+                        ) {
                             let snap=t.snapshot.as_deref().context("warehouse tables require snapshot (version for Databricks, RFC3339 timestamp otherwise)")?;
                             if matches!(s.connection, Connection::Databricks { .. }) {
                                 snap.parse::<u64>()?;
@@ -328,7 +382,11 @@ impl Config {
                 }
             }
         }
-        for addr in [&self.server.http_addr, &self.server.pg_addr] {
+        ensure!(
+            cfg!(feature = "postgres-wire") || self.server.pg_addr.is_none(),
+            "pg_addr requires a build with --features postgres-wire; omit pg_addr for REST-only operation"
+        );
+        for addr in std::iter::once(&self.server.http_addr).chain(self.server.pg_addr.iter()) {
             let a: std::net::SocketAddr = addr.parse()?;
             if !a.ip().is_loopback() && !self.server.allow_insecure_network {
                 bail!(

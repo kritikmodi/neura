@@ -1,3 +1,5 @@
+mod arrow_stream;
+pub mod clickhouse;
 pub mod files;
 pub mod instrument;
 pub mod postgres;
@@ -28,7 +30,10 @@ use datafusion::{
     },
 };
 use datafusion_federation::sql::{AstAnalyzer, SQLExecutor};
-use std::{ops::ControlFlow, sync::Arc};
+use std::{
+    ops::ControlFlow,
+    sync::{Arc, atomic::AtomicBool},
+};
 use tokio_util::sync::CancellationToken;
 
 pub fn df_error(e: impl std::fmt::Display) -> DataFusionError {
@@ -38,11 +43,12 @@ pub fn df_error(e: impl std::fmt::Display) -> DataFusionError {
 pub struct Remote {
     pub source: Source,
     pub pg: Option<Arc<postgres::Session>>,
-    pub http: warehouse::Http,
+    pub http: Option<warehouse::Http>,
     pub metrics: Metrics,
     pub limits: Limits,
     pub cancel: CancellationToken,
     pub context: String,
+    pub clickhouse_started: Arc<AtomicBool>,
 }
 impl Remote {
     pub async fn new(
@@ -64,14 +70,25 @@ impl Remote {
         } else {
             None
         };
+        let http = if matches!(
+            source.connection,
+            Connection::Databricks { .. }
+                | Connection::Snowflake { .. }
+                | Connection::Bigquery { .. }
+        ) {
+            Some(warehouse::Http::new(limits.max_remote_page_mb)?)
+        } else {
+            None
+        };
         Ok(Self {
             source,
             pg,
-            http: warehouse::Http::new(limits.max_remote_page_mb)?,
+            http,
             metrics,
             limits,
             cancel,
             context,
+            clickhouse_started: Arc::new(AtomicBool::new(false)),
         })
     }
 }
@@ -92,11 +109,16 @@ impl SQLExecutor for Remote {
                     .with_identifier_quote_style('`')
                     .build(),
             ),
+            Connection::Clickhouse { .. } => Arc::new(
+                CustomDialectBuilder::new()
+                    .with_identifier_quote_style('`')
+                    .build(),
+            ),
             _ => Arc::new(DefaultDialect {}),
         }
     }
     fn ast_analyzer(&self) -> Option<AstAnalyzer> {
-        if self.pg.is_some() {
+        if self.pg.is_some() || matches!(self.source.connection, Connection::Clickhouse { .. }) {
             return None;
         }
         let source = self.source.clone();
@@ -188,6 +210,8 @@ impl SQLExecutor for Remote {
                 self.limits.clone(),
                 self.cancel.clone(),
             )
+        } else if matches!(self.source.connection, Connection::Clickhouse { .. }) {
+            clickhouse::execute(self.clone(), query.to_string(), schema)
         } else {
             warehouse::execute(self.clone(), query.to_string(), schema)
         }

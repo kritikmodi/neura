@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY target/linux-build/release/neura /usr/local/bin/neura
 USER 10001:10001
 WORKDIR /var/lib/neura
-EXPOSE 8080 5433
+EXPOSE 8080
 ENTRYPOINT ["neura"]
 STOPSIGNAL SIGINT
 CMD ["--config","/etc/neura/neura.toml","serve"]

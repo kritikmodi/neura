@@ -3,7 +3,7 @@ services:
   neura:
     build: ..
     image: neura:0.1.0
-    ports: ["127.0.0.1:8080:8080", "127.0.0.1:5433:5433"]
+    ports: ["127.0.0.1:8080:8080"]
     read_only: true
     user: "10001:10001"
     cap_drop: [ALL]

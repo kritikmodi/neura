@@ -2,10 +2,10 @@
 
 The baseline uses Datatailr QE `0.1.0-pre300-arm64`, Spark 3.5.6 and this Neura checkout. QE was identified from the locally available image; the user's meaning of “QE” has not been independently confirmed. An accessible QE image is required; no substitute is silently used. The provided comparison setup targets arm64. For other architectures, pin corresponding QE/JRE images and record that change as a separate experiment.
 
-Prerequisites: Docker, Rust 1.98.1, Python 3, `uv`, and approximately 20 GB of free build space. Docker needs enough RAM to run the three 2 GiB engine containers and two 512 MiB sources. Build the toolchain image first if using the standard Docker build instead of the low-disk path below.
+Prerequisites: Docker, Rust 1.98.1, Python 3, `uv`, and approximately 20 GB of free build space. Docker needs enough RAM to run the three 2 GiB engine containers and two 512 MiB sources. ClickHouse adds a 1 GiB fixture only for connector tests and is not part of the published comparison. Build the toolchain image first if using the standard Docker build instead of the low-disk path below.
 
 ```sh
-docker compose -f deploy/compose.test.yml up -d --wait
+docker compose -f deploy/compose.test.yml up -d --wait postgres s3
 NEURA_FIXTURE_ROWS=1000000 uv run --with pyarrow==21.0.0 --with boto3==1.40.40 scripts/seed.py
 source scripts/test-env.sh
 bash scripts/build-low-disk.sh
@@ -20,9 +20,9 @@ All engines have the same hard **2 CPU, 2 GiB RAM, no extra swap** limits. Neura
 
 Each of five workloads has one process-cold sample after an engine restart, then a successful full priming query and five warm samples. Source processes, OS caches and storage caches remain running. **These are not storage-cold measurements.** Readiness checks are excluded, so cold latency excludes engine startup. Result/data caching is disabled in QE; Spark tables are not explicitly cached and Neura has no result cache. Normal metadata, connection and OS caches still exist.
 
-The harness checks every result against a separate Python oracle, preserves failures and records latency including connection/authentication and full result fetching. PostgreSQL-wire clients are used for Neura/QE; Spark uses a local HTTP adapter around its persistent driver. Protocol overhead is part of measured latency and differs. Throughput measures ten warm federated queries at concurrency two. This is a small synthetic workload, not a saturation or distributed-scaling study. Run more repetitions and larger/varied datasets for production decisions.
+The harness checks every result against a separate Python oracle, preserves failures and records latency including connection/authentication and full result fetching. Current runs use REST NDJSON for Neura, PostgreSQL wire for QE, and a local HTTP adapter around Spark’s persistent driver. Protocol overhead is part of measured latency and differs. Throughput measures ten warm federated queries at concurrency two. This is a small synthetic workload, not a saturation or distributed-scaling study. Run more repetitions and larger/varied datasets for production decisions.
 
-Neura client connections use SCRAM authentication. The local QE endpoint has no client password configured, and the local Spark HTTP adapter has no authentication. Source credentials and permissions remain identical. In particular, short-query latency is not an isolated execution-time comparison: it includes these different authentication paths. Cube normally reuses pooled connections. The fixture's 1,024-row Parquet groups deliberately exercise pruning, but full scans amplify small-range request overhead; it is not representative of every production Parquet layout.
+The published 2026-09-28 baseline used Neura’s optional PostgreSQL wire path with SCRAM authentication. Current harness runs use the default REST endpoint with bearer authentication; protocol choice is recorded in new result metadata. Do not attribute differences between these runs solely to query execution. Historical raw results remain unchanged. The local QE endpoint has no client password configured, and the local Spark HTTP adapter has no authentication. Source credentials and permissions remain identical. In particular, short-query latency is not an isolated execution-time comparison: it includes these different authentication paths. Cube normally reuses pooled connections when the compatibility feature is enabled. The fixture's 1,024-row Parquet groups deliberately exercise pruning, but full scans amplify small-range request overhead; it is not representative of every production Parquet layout.
 
 Neura uses its default `parquet_row_filter_pushdown=false`: file/row-group pruning remains enabled, while row-level late materialization is opt-in. Diagnostic runs showed that row-level filtering increased range requests for this low-selectivity join. The published comparison uses the final source/image identity, not those interrupted diagnostic runs.
 

@@ -1,0 +1,15 @@
+# PostgreSQL source connector, available without --features postgres-wire.
+# Set NEURA_POSTGRES_DSN (or NEURA_POSTGRES_DSN_FILE) to a libpq-style DSN:
+# host=database.example port=5432 dbname=analytics user=neura_reader password=... sslmode=require
+# Use a restricted, non-superuser, non-BYPASSRLS identity. TLS verifies the server.
+[[sources]]
+name = "pg"
+kind = "postgres"
+dsn_env = "NEURA_POSTGRES_DSN"
+[[sources.tables]]
+name = "customers"
+remote = "public.customers"
+columns = [
+  {name="id", data_type="int64", nullable=false},
+  {name="region", data_type="utf8", nullable=true},
+]

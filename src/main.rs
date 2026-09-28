@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     let engine = Engine::new(config)?;
     match args.command {
         Command::Serve => {
-            tracing::info!(http=%engine.config.server.http_addr,pg=%engine.config.server.pg_addr,"Neura listening");
+            tracing::info!(http=%engine.config.server.http_addr,"Neura REST listening");
             tokio::select! {r=serve(engine)=>r?,_=tokio::signal::ctrl_c()=>{}}
         }
         Command::Query { sql, diagnostics } => {
@@ -70,6 +70,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 async fn serve(e: Arc<Engine>) -> Result<()> {
-    tokio::try_join!(neura::api::serve(e.clone()), neura::pgwire::serve(e))?;
-    Ok(())
+    #[cfg(feature = "postgres-wire")]
+    if e.config.server.pg_addr.is_some() {
+        tracing::info!(pg=?e.config.server.pg_addr,"Optional PostgreSQL compatibility listener enabled");
+        tokio::try_join!(neura::api::serve(e.clone()), neura::pgwire::serve(e))?;
+        return Ok(());
+    }
+    neura::api::serve(e).await
 }

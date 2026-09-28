@@ -29,10 +29,27 @@ def execute(engine, sql):
         if "error" in response:
             raise RuntimeError(response["error"])
         return response["rows"]
-    port = 55434 if engine == "neura" else 56433
-    password = (
-        os.environ.get("NEURA_PG_PASSWORD", "") if engine == "neura" else "unused"
-    )
+    if engine == "neura":
+        req = urllib.request.Request("http://127.0.0.1:58082/v1/query",
+            data=json.dumps({"sql": sql}).encode(), headers={
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + os.environ["NEURA_API_TOKEN"],
+            })
+        rows, complete = [], False
+        with urllib.request.urlopen(req, timeout=120) as response:
+            for line in response:
+                item = json.loads(line)
+                if item["type"] == "error":
+                    raise RuntimeError(item["error"])
+                if item["type"] == "row":
+                    rows.append(item["values"])
+                if item["type"] == "complete":
+                    complete = True
+        if not complete:
+            raise RuntimeError("Neura result ended without completion")
+        return rows
+    port = 56433
+    password = "unused"
     with psycopg.connect(
         host="127.0.0.1",
         port=port,
@@ -174,6 +191,7 @@ def main():
         report["engines"][engine] = {
             "image": info["Config"]["Image"],
             "image_id": info["Image"],
+            "client_protocol": {"neura": "HTTP NDJSON with bearer authentication", "qe": "PostgreSQL wire without password authentication", "spark": "HTTP JSON without authentication"}[engine],
             "cpu_limit": 2,
             "memory_limit_bytes": host["Memory"],
             "memory_swap_bytes": host["MemorySwap"],

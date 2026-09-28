@@ -1,0 +1,10 @@
+# Optional compatibility build. Also set server.pg_addr in the mounted config.
+# docker compose -f deploy/compose.yml -f deploy/compose.cube.yml up --build
+services:
+  neura:
+    build:
+      context: ..
+      args:
+        CARGO_FEATURES: postgres-wire
+    image: neura:0.1.0-cube
+    ports: ["127.0.0.1:5433:5433"]

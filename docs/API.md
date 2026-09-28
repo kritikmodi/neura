@@ -1,6 +1,6 @@
 # Interfaces
 
-REST listens on `127.0.0.1:8080`, PostgreSQL on `127.0.0.1:5433` by default. `GET /healthz` is unauthenticated and exposes only health/version. All `/v1` endpoints require `Authorization: Bearer <NEURA_API_TOKEN>`; comparisons use constant-time SHA-256 digest comparison.
+REST listens on `127.0.0.1:8080` by default. No PostgreSQL listener is enabled in the default build. `GET /healthz` is unauthenticated and exposes only health/version. All `/v1` endpoints require `Authorization: Bearer <NEURA_API_TOKEN>`; comparisons use constant-time SHA-256 digest comparison.
 
 | Endpoint | Behavior |
 |---|---|
@@ -14,9 +14,13 @@ Supply a UUID before submission to make cancellation possible during planning. Q
 
 Configuration is immutable during a server run. Change configuration and restart to manage sources; dynamic source CRUD and distributed durable query history are not implemented. A single token authorizes the configured service identity. Frontend SQL is limited to one SELECT/EXPLAIN SELECT; arbitrary DDL, DML, COPY, functions loading files, and session mutation are not exposed.
 
-The CLI offers `query`, `serve`, and `check-config`; see `neura --help`. The Rust library exposes `Config`, `Engine::query`, `Engine::collect`, cancellation, and diagnostics. CompanyBrain can later call REST or the PG endpoint, or embed the crate through a separate adapter; Neura does not import CompanyBrain code.
+The CLI offers `query`, `serve`, and `check-config`; see `neura --help`. The Rust library exposes `Config`, `Engine::query`, `Engine::collect`, cancellation, and diagnostics. CompanyBrain can later call REST or embed the crate through a separate adapter; Neura does not import CompanyBrain code.
 
-## PostgreSQL and Cube
+## Optional PostgreSQL wire and Cube
+
+The default binary does not compile the wire endpoint and opens only HTTP. PostgreSQL **source** connectivity is independent and always available. Wire is needed only to use the existing Cube PostgreSQL driver / PostgreSQL clients; it adds no query-engine or source-access capability.
+
+Build `cargo build --release --features postgres-wire`, then add `pg_addr="127.0.0.1:5433"` under `[server]` and supply `NEURA_PG_PASSWORD` (or its `_FILE` secret). Merely enabling the build feature does not start a listener without `pg_addr`. Docker users can opt in with `deploy/compose.cube.yml`; the default image/compose file exposes only 8080. The low-disk alternative is `NEURA_CARGO_FEATURES=postgres-wire NEURA_IMAGE=neura:0.1.0-cube scripts/build-low-disk.sh`. `scripts/wire-integration.sh` exercises the optional build against the real fixtures. The default REST build does not support Cube's PostgreSQL driver directly.
 
 Authentication is SCRAM-SHA-256. Simple queries and extended Parse/Bind/Describe/Execute are implemented using pgwire. Parameters are substituted into a parsed SQL AST as values, never interpolated SQL fragments. Basic binary scalars and text results are supported. Binary decimal/nested result formats are rejected; node-postgres and the tested Cube driver request text. Supported OIDs cover primitive strings, booleans, integers, floats, dates, timestamps and numeric values.
 

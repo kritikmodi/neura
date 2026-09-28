@@ -69,7 +69,6 @@ config = (
     .read_text()
     .replace("memory_mb=256", "memory_mb=512")
     .replace("127.0.0.1:58080", "0.0.0.0:8080")
-    .replace("127.0.0.1:55433", "0.0.0.0:5433")
     .replace("[server]", "[server]\nallow_insecure_network=true")
     .replace("http://127.0.0.1:59000", "http://s3:8333")
 )
@@ -126,8 +125,6 @@ start(
     "neura-bench-neura",
     [
         "-p",
-        "127.0.0.1:55434:5433",
-        "-p",
         "127.0.0.1:58082:8080",
         "-v",
         f"{ROOT}/data/neura-benchmark.toml:/config/neura.toml:ro",
@@ -141,8 +138,6 @@ start(
         "AWS_REGION=us-east-1",
         "-e",
         "NEURA_API_TOKEN",
-        "-e",
-        "NEURA_PG_PASSWORD",
         "neura:0.1.0",
         "-c",
         "/config/neura.toml",

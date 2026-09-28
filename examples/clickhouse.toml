@@ -1,0 +1,17 @@
+# Read-only ClickHouse identity; source grants and row policies stay authoritative.
+# See docs/CLICKHOUSE.md for the required settings profile.
+[[sources]]
+name = "ch"
+kind = "clickhouse"
+endpoint = "https://YOUR_CLICKHOUSE_HOST:8443"
+user = "neura_reader"
+password_env = "NEURA_CLICKHOUSE_PASSWORD"
+consistency = "statement"
+[[sources.tables]]
+name = "events"
+remote = "analytics.events"
+columns = [
+  {name="id", data_type="int64", nullable=false},
+  {name="category", data_type="utf8", nullable=false},
+  {name="amount", data_type="decimal(18,2)", nullable=true},
+]

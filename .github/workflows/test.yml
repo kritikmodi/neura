@@ -17,9 +17,12 @@ jobs:
         run: |
           cargo fmt --check
           cargo clippy --all-targets -- -D warnings
+          cargo clippy --all-targets --features postgres-wire -- -D warnings
           cargo test --all-targets
-      - name: Actual PostgreSQL and S3-compatible integration
+      - name: Actual PostgreSQL, ClickHouse and S3-compatible integration
         run: bash scripts/integration.sh
+      - name: Optional Cube compatibility
+        run: scripts/wire-integration.sh
       - name: Actual Iceberg snapshots and deletes
         run: |
           uv run --with 'pyiceberg[sql-sqlite]==0.10.0' --with pyarrow==21.0.0 scripts/iceberg_fixture.py

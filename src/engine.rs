@@ -184,43 +184,46 @@ impl Engine {
         let catalog = ctx
             .catalog("datafusion")
             .context("default catalog missing")?;
-        // Neura exposes no PostgreSQL user-defined, enum, array or composite types.
-        let pg_catalog = Arc::new(MemorySchemaProvider::new());
-        catalog.register_schema("pg_catalog", pg_catalog.clone())?;
-        for (name, cols) in [
-            (
-                "pg_type",
-                vec![
-                    ("oid", true),
-                    ("typname", false),
-                    ("typcategory", false),
-                    ("typrelid", true),
-                    ("typelem", true),
-                    ("typtype", false),
-                ],
-            ),
-            ("pg_class", vec![("oid", true), ("relkind", false)]),
-        ] {
-            let fields = cols
-                .into_iter()
-                .map(|(n, i)| {
-                    datafusion::arrow::datatypes::Field::new(
-                        n,
-                        if i {
-                            datafusion::arrow::datatypes::DataType::Int64
-                        } else {
-                            datafusion::arrow::datatypes::DataType::Utf8
-                        },
-                        false,
-                    )
-                })
-                .collect::<Vec<_>>();
-            let table = Arc::new(datafusion::datasource::MemTable::try_new(
-                Arc::new(datafusion::arrow::datatypes::Schema::new(fields)),
-                vec![vec![]],
-            )?);
-            pg_catalog.register_table(name.into(), table.clone())?;
-            ctx.register_table(name, table)?;
+        #[cfg(feature = "postgres-wire")]
+        if self.config.server.pg_addr.is_some() {
+            // Neura exposes no PostgreSQL user-defined, enum, array or composite types.
+            let pg_catalog = Arc::new(MemorySchemaProvider::new());
+            catalog.register_schema("pg_catalog", pg_catalog.clone())?;
+            for (name, cols) in [
+                (
+                    "pg_type",
+                    vec![
+                        ("oid", true),
+                        ("typname", false),
+                        ("typcategory", false),
+                        ("typrelid", true),
+                        ("typelem", true),
+                        ("typtype", false),
+                    ],
+                ),
+                ("pg_class", vec![("oid", true), ("relkind", false)]),
+            ] {
+                let fields = cols
+                    .into_iter()
+                    .map(|(n, i)| {
+                        datafusion::arrow::datatypes::Field::new(
+                            n,
+                            if i {
+                                datafusion::arrow::datatypes::DataType::Int64
+                            } else {
+                                datafusion::arrow::datatypes::DataType::Utf8
+                            },
+                            false,
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                let table = Arc::new(datafusion::datasource::MemTable::try_new(
+                    Arc::new(datafusion::arrow::datatypes::Schema::new(fields)),
+                    vec![vec![]],
+                )?);
+                pg_catalog.register_table(name.into(), table.clone())?;
+                ctx.register_table(name, table)?;
+            }
         }
         for source in &self.config.sources {
             let schema = Arc::new(MemorySchemaProvider::new());
@@ -400,6 +403,7 @@ impl Engine {
             stream: Box::pin(RecordBatchStreamAdapter::new(out, output)),
         })
     }
+    #[cfg(feature = "postgres-wire")]
     pub async fn describe(self: &Arc<Self>, sql: &str) -> Result<SchemaRef> {
         security::validate_sql(sql)?;
         let _permit = self
