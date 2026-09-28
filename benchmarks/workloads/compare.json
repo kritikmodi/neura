@@ -1,0 +1,10 @@
+[
+  {"name":"parquet_count","sql":"SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders"},
+  {"name":"parquet_filter","sql":"SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders WHERE order_id < 1000"},
+  {"name":"postgres_rls","sql":"SELECT region, COUNT(*) AS n FROM pg.customers GROUP BY region ORDER BY region"},
+  {"name":"federated_group","sql":"SELECT c.region, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id GROUP BY c.region ORDER BY c.region"},
+  {"name":"federated_selective","sql":"SELECT c.region, COUNT(*) AS n, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id WHERE c.id < 10 AND o.order_id < 10000 GROUP BY c.region ORDER BY c.region"},
+  {"name":"parquet_count_coarse","oracle":"parquet_count","sql":"SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders_coarse"},
+  {"name":"federated_group_coarse","oracle":"federated_group","sql":"SELECT c.region, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders_coarse o ON c.id=o.customer_id GROUP BY c.region ORDER BY c.region"},
+  {"name":"local_high_cardinality","sql":"SELECT COUNT(*) AS groups, SUM(total) AS total, SUM(n) AS rows FROM (SELECT order_id, SUM(amount) AS total, COUNT(*) AS n FROM local.orders GROUP BY order_id) t"}
+]

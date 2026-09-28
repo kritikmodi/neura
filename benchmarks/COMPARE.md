@@ -1,0 +1,98 @@
+# Neura versus Spark and DuckDB
+
+This suite compares the unchanged Neura engine with Spark 3.5.6 and DuckDB 1.5.5,
+using real PostgreSQL and S3-compatible storage. It supplements the historical
+QE/Spark baseline; it does not overwrite those results.
+
+## Reproduce
+
+The supplied runtime is pinned to Linux arm64 containers. Start the local fixtures
+and build Neura as described in [README.md](README.md). The Spark runtime needs the
+`neura-build:1.98.1` image produced by the low-disk build setup. Python, `uv`, Docker,
+outbound access for pinned dependencies, and adequate host disk are required.
+
+```sh
+docker compose -f deploy/compose.test.yml up -d --wait postgres s3
+# Seed once; never reseed while tests or queries are running.
+NEURA_FIXTURE_ROWS=1000000 uv run --with pyarrow==21.0.0 --with boto3==1.40.40 scripts/seed.py
+source scripts/test-env.sh
+bash scripts/build-low-disk.sh
+python3 benchmarks/prepare_compare.py
+python3 benchmarks/compare.py --smoke --output results/spark-duckdb-smoke.json
+python3 benchmarks/compare.py --repeats 5 --throughput-queries 20 --concurrency 2
+python3 benchmarks/summarize_compare.py results/spark-duckdb.json results/spark-duckdb.md
+```
+
+`prepare_compare.py` refuses to replace existing containers. Subsequent runs can
+reuse the stopped `neura-compare-neura`, `neura-compare-spark` and
+`neura-compare-duckdb` containers. The harness starts/stops only these containers
+and leaves them stopped on completion. Do not prune unrelated Docker resources.
+Workspace-backed `/tmp` directories avoid relying on free space in Docker's VM.
+
+The setup downloads a checksummed DuckDB Python wheel, installs official signed
+`httpfs` and `postgres` extensions, and records extension hashes in the result.
+Spark uses the checksummed JRE/JDBC/S3 dependencies in `prepare.py`. All engines
+use **2 CPUs, 2 GiB container RAM, no extra swap**, two execution threads/partitions
+and a nominal **512 MiB** internal budget. Spark's heap and the other engines'
+tracked memory pools do not account for the same allocations.
+
+The fixture generator downloads and hashes the actual S3 objects, preserves the
+existing small-row-group files, and writes equivalent 131,072-row-group files
+under a separate content-addressed S3 prefix. Exact filenames, hashes, sizes and
+ETags are recorded. Local operator tests read the larger-row-group files through
+read-only container mounts. The same restricted PostgreSQL and S3 identities are
+used throughout. A PostgreSQL row-policy probe and source-confirmed forbidden-table
+rejection run before timing. No database table is copied into an engine cache.
+
+## What is measured
+
+Eight queries cover full/selective Parquet aggregation, PostgreSQL RLS, full and
+selective PostgreSQL × S3 joins, equivalent scans/joins with larger row groups,
+and local aggregation over a million distinct groups. Every result, including
+priming, throughput and memory-pass queries, is checked against a separate Python
+oracle. Wrong results and failures remain in the JSON and cause an unsuccessful
+exit. SQL workload text is checked in; only catalog identifiers change for Spark's
+temporary views. DuckDB uses its real read-only PostgreSQL attachment and S3 reader.
+
+For each workload, engine order rotates. Each engine starts afresh, completes
+readiness, executes one process-cold query, executes a full priming query, and
+executes five warm queries. Startup time is recorded separately. Source, OS and
+storage caches are not flushed: **there is no storage-cold claim**. Spark and DuckDB
+resolve schemas during startup; Neura resolves them during query setup. This is
+a service comparison, not isolated operator timing. No explicit result/table
+caching is enabled; DuckDB's external file cache is explicitly disabled. Normal
+metadata, connection and OS caching still occurs.
+
+All clients use authenticated HTTP and fully fetch results. Neura streams NDJSON;
+Spark/DuckDB use the same minimal Python adapter returning JSON. Adapters and auth
+implementations differ, so short-query times include those differences. The adapter
+accepts only exact benchmark and probe SQL, listens on a localhost-published port,
+and is a fixture utility, not a Neura connector or production service.
+
+Throughput uses a finite batch of 20 queries at concurrency two for three workloads.
+It is not an open-loop saturation test; a p95 from 20 observations is not a stable
+production tail estimate. The shared host is not exclusively reserved.
+
+Memory is measured in a **separate pass** so the observer does not affect latency
+samples. Following a fresh start and readiness, a native observer samples roughly
+every 50 ms while two queries run simultaneously. It reads process RSS, PSS,
+private pages and lifetime per-process high-water marks, plus cgroup current/peak
+memory. The observer is excluded from process sums but consumes a small amount of
+cgroup memory and CPU during that pass. Short-lived peaks can fall between samples.
+RSS can double-count shared pages; PSS apportions them. Summing process high-water
+marks is not a simultaneous peak. Cgroup accounting includes startup/file cache,
+and can charge shared mappings elsewhere; do not label it process RSS. All raw
+observations are retained. Local bind mounts and spill files use host storage;
+the 4 GiB spill setting is per Neura query, versus DuckDB's database-wide setting.
+
+Source data remains static for the whole experiment. Passing permission and
+result checks does not certify identical snapshot semantics under concurrent
+writes. This suite does not exercise cloud warehouses, distributed execution,
+Iceberg evolution, or the full SQL/type surface.
+
+## Official connector references
+
+- [DuckDB PostgreSQL extension](https://duckdb.org/docs/current/core_extensions/postgres/overview)
+- [DuckDB S3 support](https://duckdb.org/docs/current/core_extensions/httpfs/s3api)
+- [DuckDB memory/cache configuration](https://duckdb.org/docs/current/configuration/overview)
+- [Spark SQL tuning](https://spark.apache.org/docs/3.5.6/sql-performance-tuning.html)

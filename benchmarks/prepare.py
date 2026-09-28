@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prepare only isolated Neura benchmark containers. Credentials are fixture-only."""
 
-import hashlib, json, os, pathlib, platform, subprocess, urllib.request
+import hashlib, json, os, pathlib, platform, subprocess, sys, urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
@@ -64,6 +64,8 @@ run(
     "neura-spark-runtime:3.5.6",
     ".",
 )
+if "--runtime-only" in sys.argv:
+    raise SystemExit(0)
 config = (
     (ROOT / "data/test.toml")
     .read_text()
