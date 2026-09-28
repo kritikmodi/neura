@@ -20,7 +20,7 @@ s3 = boto3.client(
 )
 manifest = {"rows": 0, "small": [], "large": []}
 for i, original in enumerate(lake["tables"][0]["files"]):
-    # Download the actual S3 bytes, rather than hashing a differently encoded local copy.
+    # Download the actual S3 bytes rather than assuming a local copy is identical.
     obj = s3.get_object(Bucket="neura-fixture", Key=original["path"], IfMatch=original["etag"])
     body = obj["Body"].read()
     local = DEST / f"small-{i}.parquet"

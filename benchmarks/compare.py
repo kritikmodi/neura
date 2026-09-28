@@ -15,7 +15,9 @@ import urllib.error
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PORTS = {"neura": 58102, "spark": 58101, "duckdb": 58103}
+PORTS = {"neura": 58102, "spark": 58101, "duckdb": int(os.environ.get("NEURA_BENCH_DUCKDB_PORT", "58103"))}
+PREFIX = os.environ.get("NEURA_BENCH_PREFIX", "neura-compare-")
+TEMP_ROOT = pathlib.Path(os.environ.get("NEURA_BENCH_TMP_ROOT", str(ROOT / "data/compare-runtime")))
 
 
 def docker(*args):
@@ -55,7 +57,7 @@ def execute(engine, sql):
 
 def start(engine):
     started = time.perf_counter()
-    docker("start", "neura-compare-" + engine)
+    docker("start", PREFIX + engine)
     deadline, last, checked = time.monotonic() + 180, None, 0
     while time.monotonic() < deadline:
         try:
@@ -65,14 +67,14 @@ def start(engine):
             last = error
             if time.monotonic() - checked > 1:
                 checked = time.monotonic()
-                if docker("inspect", "--format", "{{.State.Running}}", "neura-compare-" + engine) == "false":
-                    raise RuntimeError(f"{engine} exited during startup: " + docker("logs", "--tail", "15", "neura-compare-" + engine))
+                if docker("inspect", "--format", "{{.State.Running}}", PREFIX + engine) == "false":
+                    raise RuntimeError(f"{engine} exited during startup: " + docker("logs", "--tail", "15", PREFIX + engine))
             time.sleep(0.2)
     raise RuntimeError(f"{engine} readiness failed: {last}")
 
 
 def stop(engine):
-    docker("stop", "--time", "3", "neura-compare-" + engine)
+    docker("stop", "--time", "3", PREFIX + engine)
 
 
 def canonical(rows):
@@ -116,6 +118,7 @@ def measure(engine, workload, expected):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--engines", nargs="+", choices=list(PORTS), default=list(PORTS))
+    parser.add_argument("--workloads", nargs="+", help="Optional workload names")
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--throughput-queries", type=int, default=20)
     parser.add_argument("--concurrency", type=int, default=2)
@@ -124,6 +127,9 @@ def main():
     args = parser.parse_args()
     assert args.repeats > 0 and args.throughput_queries > 0 and 1 <= args.concurrency <= 2
     workloads = json.loads((ROOT / "benchmarks/workloads/compare.json").read_text())
+    if args.workloads:
+        assert set(args.workloads) <= {w["name"] for w in workloads}, "Unknown workload"
+        workloads = [w for w in workloads if w["name"] in args.workloads]
     fixture = json.loads((ROOT / "data/compare/manifest.json").read_text())
     expected = oracle(fixture["rows"])
     report = {"started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -141,7 +147,7 @@ def main():
             "Cold is process-cold after readiness, excluding startup; source/OS/storage caches retained.",
             "Spark and DuckDB discover schemas during startup; Neura does so during queries.",
             "Authenticated HTTP end-to-end full-fetch latency; Neura NDJSON, other adapters JSON; adapters differ.",
-            "No explicit result/table caches; DuckDB external file cache disabled. Connection/metadata/OS caches remain.",
+            "No explicit result/table caches; DuckDB file-cache setting is recorded in engine metadata. Connection/metadata/OS caches remain.",
             "Engines execute sequentially; their order rotates per workload. Shared host is not exclusive.",
             "Memory measured separately from latency at roughly 50ms intervals; short-lived peaks may be missed.",
             "RSS sums may double-count shared pages; PSS apportions them. Sum of process HWM is not a simultaneous peak.",
@@ -170,7 +176,7 @@ def main():
         return value
 
     for engine in args.engines:
-        info = json.loads(docker("inspect", "neura-compare-" + engine))[0]
+        info = json.loads(docker("inspect", PREFIX + engine))[0]
         host = info["HostConfig"]
         assert host["NanoCpus"] == 2_000_000_000 and host["Memory"] == 2 * 1024**3 and host["MemorySwap"] == 2 * 1024**3
         assert not info["State"]["Running"], f"Stop {engine}'s benchmark container before a new run"
@@ -218,7 +224,8 @@ def main():
                     for repeat in range(args.repeats):
                         report["samples"].append(sample(engine, workload, "warm", repeat)); save()
                 stop(engine); active = None
-        for name in ("federated_group", "federated_group_coarse", "local_high_cardinality"):
+        for name in (n for n in ("federated_group", "federated_group_coarse", "local_high_cardinality")
+                if n in {w["name"] for w in workloads}):
             workload = next(w for w in workloads if w["name"] == name)
             for engine in args.engines:
                 active = engine
@@ -237,15 +244,16 @@ def main():
                         "successful_queries": successful, "successful_queries_per_second": successful / elapsed})
                     print(engine, name, "THROUGHPUT", successful, "/", len(samples), round(successful / elapsed, 3), flush=True)
                 stop(engine); active = None; save()
-        for name in ("federated_group", "federated_group_coarse", "local_high_cardinality"):
+        for name in (n for n in ("federated_group", "federated_group_coarse", "local_high_cardinality")
+                if n in {w["name"] for w in workloads}):
             workload = next(w for w in workloads if w["name"] == name)
             for engine in args.engines:
                 active = engine
                 boot(engine, "memory", name)
-                file = ROOT / f"data/compare-runtime/{engine}/memory-{name}.jsonl"
+                file = TEMP_ROOT / engine / f"memory-{name}.jsonl"
                 if file.exists():
                     file.unlink()
-                monitor = subprocess.Popen(["docker", "exec", "neura-compare-" + engine, "/memmon", "/tmp/" + file.name],
+                monitor = subprocess.Popen(["docker", "exec", PREFIX + engine, "/memmon", "/tmp/" + file.name],
                     stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
                 deadline = time.monotonic() + 10
                 while not file.exists() or file.stat().st_size == 0:

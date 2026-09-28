@@ -22,9 +22,11 @@ paths = lambda kind, scheme: [f"{scheme}://neura-fixture/{f['path']}" for f in M
 
 if ENGINE == "duckdb":
     import duckdb
+    file_cache = os.environ.get("BENCH_DUCKDB_FILE_CACHE", "false")
+    assert file_cache in ("true", "false")
     db = duckdb.connect(config={"threads": 2, "memory_limit": "512MiB",
         "temp_directory": "/tmp/spill", "max_temp_directory_size": "4GiB",
-        "extension_directory": "/extensions", "enable_external_file_cache": False})
+        "extension_directory": "/extensions", "enable_external_file_cache": file_cache == "true"})
     db.execute("LOAD httpfs; LOAD postgres")
     db.execute("""CREATE SECRET fixture (TYPE S3, KEY_ID 'neura-reader',
         SECRET 'neura-test-readonly-storage', REGION 'us-east-1', ENDPOINT 's3:8333',

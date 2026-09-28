@@ -3,12 +3,14 @@
 
 import argparse
 import json
+import math
 import pathlib
 import statistics
 
 p = argparse.ArgumentParser()
 p.add_argument("input", type=pathlib.Path)
 p.add_argument("output", type=pathlib.Path)
+p.add_argument("--cache", type=pathlib.Path, help="Separate DuckDB default-file-cache observations")
 a = p.parse_args()
 r = json.loads(a.input.read_text())
 engines = list(r["engines"])
@@ -59,7 +61,7 @@ lines += ["", "## Throughput", "", "A finite batch at concurrency two, after pri
 for item in r["throughput"]:
     values = sorted(s["latency_ms"] for s in item["samples"] if s["correct"])
     median = f"{statistics.median(values):.2f}" if values else "FAILED"
-    p95 = f"{values[max(0, __import__('math').ceil(len(values)*.95)-1)]:.2f}" if values else "FAILED"
+    p95 = f"{values[max(0, math.ceil(len(values)*.95)-1)]:.2f}" if values else "FAILED"
     lines.append(f"| {item['workload']} | {item['engine']} | {item['successful_queries']}/{len(item['samples'])} | "
         f"{item['successful_queries_per_second']:.3f} | {median} | {p95} |")
 lines += ["", "*Nearest-rank p95 over this small batch; not a reliable production tail-latency estimate.", "",
@@ -75,6 +77,9 @@ for item in r["memory"]:
         f"{item['peaks']['rss_bytes']/1024**2:.1f} | {item['peaks']['pss_bytes']/1024**2:.1f} | {item['peaks']['cgroup_peak_bytes']/1024**2:.1f} |")
 lines += ["", "Cgroup accounting includes startup and filesystem cache, and shared mapped pages can be charged to other cgroups. "
     "It is not interchangeable with RSS or PSS. Baseline and query resident memory can also reflect earlier readiness work.", "",
+    "RSS is the approximate Linux VmRSS counter; PSS comes from smaps_rollup. They are read sequentially, "
+    "so small RSS/PSS discrepancies can occur. Brief allocation peaks may exceed sampled RSS/PSS; "
+    "consult the recorded process high-water marks as well.", "",
     "## Layout and source diagnostics", "",
     f"Small layout: {sum(f['row_groups'] for f in r['fixture']['small'])} row groups across two objects, "
     f"{sum(f['bytes'] for f in r['fixture']['small']):,} compressed bytes. "
@@ -94,6 +99,34 @@ lines += ["", "Neura records source-specific payload bytes, not uniform network/
     "Neura currently resolves their metadata during each referenced-source setup.", "",
     "## Interpretation limits", ""]
 lines += ["- " + note for note in r["notes"]]
+if a.cache:
+    cached = json.loads(a.cache.read_text())
+    cached_checks = cached["samples"] + cached["primes"] + [s for t in cached["throughput"] for s in t["samples"]] + [s for m in cached["memory"] for s in m["checks"]]
+    lines += ["", "## DuckDB with its default external file cache", "",
+        f"Separate profile: {sum(s['correct'] for s in cached_checks)}/{len(cached_checks)} result checks passed, "
+        f"{len(cached['errors'])} harness errors. Same limits, source identities and HTTP adapter. "
+        "Only the external file cache is enabled. This is cached file data, not precomputed query results. "
+        "These warm numbers must not be silently substituted into the baseline above.", "",
+        "| Workload | DuckDB cache off warm median ms | DuckDB cache on warm median ms | Cache on process-cold ms |",
+        "|---|---:|---:|---:|"]
+    for workload in cached["workloads"]:
+        values = []
+        for source in (r, cached):
+            samples = [s["latency_ms"] for s in source["samples"] if s["engine"] == "duckdb" and
+                s["workload"] == workload["name"] and s["mode"] == "warm" and s["correct"]]
+            values.append(f"{statistics.median(samples):.2f}" if samples else "FAILED / MISSING")
+        cold = [s["latency_ms"] for s in cached["samples"] if s["workload"] == workload["name"] and s["mode"].startswith("process_cold") and s["correct"]]
+        values.append(f"{cold[0]:.2f}" if cold else "FAILED / MISSING")
+        lines.append("| " + workload["name"] + " | " + " | ".join(values) + " |")
+    lines += ["", "| Workload | Cache on throughput queries/s | Observed peak RSS MiB | Observed peak PSS MiB |",
+        "|---|---:|---:|---:|"]
+    for item in cached["throughput"]:
+        memory = next(m for m in cached["memory"] if m["workload"] == item["workload"])
+        lines.append(f"| {item['workload']} | {item['successful_queries_per_second']:.3f} | "
+            f"{memory['peaks']['rss_bytes']/1024**2:.1f} | {memory['peaks']['pss_bytes']/1024**2:.1f} |")
+    lines += ["", "The same separate memory-pass caveats apply. The cache profile remains a static-fixture test; "
+        "permission revocation, cache invalidation under updates, large working sets, and equal end-user governance have not been certified.", "",
+        f"[Cache-profile raw observations]({a.cache.name})", ""]
 lines += ["- Eight workloads on a synthetic million-row fixture do not establish universal superiority, distributed scaling, "
     "production sizing, full SQL/type equivalence or cloud warehouse behavior.",
     "- PostgreSQL grants/RLS are tested. Source data stays unchanged during measurement; "

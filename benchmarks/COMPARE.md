@@ -21,6 +21,7 @@ python3 benchmarks/prepare_compare.py
 python3 benchmarks/compare.py --smoke --output results/spark-duckdb-smoke.json
 python3 benchmarks/compare.py --repeats 5 --throughput-queries 20 --concurrency 2
 python3 benchmarks/summarize_compare.py results/spark-duckdb.json results/spark-duckdb.md
+uv run --with matplotlib==3.10.6 benchmarks/plot_compare.py results/spark-duckdb.json results/plots
 ```
 
 `prepare_compare.py` refuses to replace existing containers. Subsequent runs can
@@ -84,11 +85,33 @@ marks is not a simultaneous peak. Cgroup accounting includes startup/file cache,
 and can charge shared mappings elsewhere; do not label it process RSS. All raw
 observations are retained. Local bind mounts and spill files use host storage;
 the 4 GiB spill setting is per Neura query, versus DuckDB's database-wide setting.
+RSS is read from `/proc/<pid>/status`, PSS from `smaps_rollup`. These counters are
+read sequentially and VmRSS is approximate, so small RSS/PSS discrepancies can
+occur. Use the raw high-water marks as additional evidence for brief allocation
+peaks missed by the sampling interval, not as a sum of simultaneous process peaks.
 
 Source data remains static for the whole experiment. Passing permission and
 result checks does not certify identical snapshot semantics under concurrent
 writes. This suite does not exercise cloud warehouses, distributed execution,
 Iceberg evolution, or the full SQL/type surface.
+
+## Separate DuckDB default-cache profile
+
+The baseline explicitly disables DuckDB's external file cache. That is useful for
+comparing repeated reads, but it is not DuckDB's default configuration. After the
+three-engine suite finishes, run:
+
+```sh
+source scripts/test-env.sh
+python3 benchmarks/cache_compare.py
+```
+
+This creates a separate `neura-cache-duckdb` container on localhost port 58104 with
+the same resources, identities and adapter, enabling only the external file cache.
+It measures four representative workloads and saves `results/duckdb-file-cache.json`.
+The setting is asserted from live metadata. Warm cached results must be labelled
+separately from the baseline; process-cold measurements and the separate memory
+pass remain present. This is file caching, not precomputed query-result caching.
 
 ## Official connector references
 
