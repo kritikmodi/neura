@@ -136,7 +136,8 @@ NEURA_BENCH_PREFIX=neura-optimized-cache- NEURA_BENCH_NEURA_PORT=58114 \
   python3 benchmarks/compare.py --engines neura --output results/optimized-cache.json
 python3 benchmarks/report_optimized.py \
   docs/benchmark-results/2026-09-28-spark-duckdb.json \
-  results/optimized.json results/optimized-cache.json results/optimized.md
+  results/optimized.json results/optimized-cache.json results/optimized.md \
+  --duckdb-cache docs/benchmark-results/2026-09-28-duckdb-file-cache.json
 ```
 
 Both profiles retain the same fixture and resource limits. The first uses the

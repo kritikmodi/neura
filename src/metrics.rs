@@ -14,7 +14,7 @@ pub struct SourceMetric {
     pub remote_bytes_processed: Option<u64>,
     /// Reuses of bytes already fetched for this query.
     pub read_ahead_hits: u64,
-    /// Extra origin bytes fetched by bounded read-ahead.
+    /// Bytes buffered beyond the triggering range, possibly from the file cache.
     pub read_ahead_bytes: u64,
     pub cache_hits: u64,
     pub cache_misses: u64,

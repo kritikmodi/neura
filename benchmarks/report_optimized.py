@@ -4,6 +4,7 @@
 import argparse
 import json
 import pathlib
+import re
 import statistics
 
 
@@ -28,8 +29,10 @@ def main():
     parser.add_argument("optimized", type=pathlib.Path)
     parser.add_argument("cached", type=pathlib.Path)
     parser.add_argument("output", type=pathlib.Path)
+    parser.add_argument("--duckdb-cache", type=pathlib.Path, help="Historical DuckDB default-cache reference")
     args = parser.parse_args()
     old, revised, cached = [json.loads(path.read_text()) for path in (args.baseline, args.optimized, args.cached)]
+    duckdb_cache = json.loads(args.duckdb_cache.read_text()) if args.duckdb_cache else None
     for report in (revised, cached):
         assert not report["errors"] and all(c["correct"] for c in checks(report)), "Failed runs must not become a success report"
         assert report["fixture"] == old["fixture"], "Fixture mismatch"
@@ -37,7 +40,7 @@ def main():
         "These are real measurements using the same million-row fixture and 2 CPU / 2 GiB container limits as the earlier comparison. "
         "The earlier Neura, Spark and DuckDB observations are historical references, not simultaneous reruns. "
         "The revised profiles were measured separately on the shared host. No claim of statistical significance or universal superiority is made.", "",
-        "Both revised profiles use adaptive S3 read-ahead and PostgreSQL pooling. The second enables a 32 MiB reusable S3 file cache, "
+        "Both revised profiles use adaptive S3 read-ahead, admission-aware partition targets and PostgreSQL pooling. The second enables a 32 MiB reusable S3 file cache, "
         "deducted from the 512 MiB execution budget. Read-ahead also reserves from that execution pool. "
         "Cache hits require a current conditional GetObject request. This authorization cost is included.", "",
         "## Correctness and provenance", ""]
@@ -49,13 +52,13 @@ def main():
             f"  Image `{report['engines']['neura']['image_id']}`; source commit `{report['git_commit']}`. "
             "Raw files additionally record exact source/configuration hashes."]
     lines += ["", "## Warm median latency (ms)", "",
-        "Five warm measurements after a full priming query; lower is better. Historical DuckDB below has its file cache **disabled**.", "",
-        "| Workload | Earlier Neura | Revised, cache off | Revised, cache 32 MiB | Earlier Spark | Earlier DuckDB, cache off |",
-        "|---|---:|---:|---:|---:|---:|"]
+        "Five warm measurements after a full priming query; lower is better. DuckDB cache profiles are labelled separately. Missing entries were not measured.", "",
+        "| Workload | Earlier Neura | Revised, cache off | Revised, cache 32 MiB | Earlier Spark | Earlier DuckDB, cache off | Earlier DuckDB, default cache |",
+        "|---|---:|---:|---:|---:|---:|---:|"]
     for workload in revised["workloads"]:
         name = workload["name"]
         values = [warm(old, "neura", name), warm(revised, "neura", name), warm(cached, "neura", name),
-            warm(old, "spark", name), warm(old, "duckdb", name)]
+            warm(old, "spark", name), warm(old, "duckdb", name), warm(duckdb_cache, "duckdb", name) if duckdb_cache else None]
         lines.append(f"| {name} | " + " | ".join(map(fmt, values)) + " |")
     lines += ["", "## Process-cold latency (ms)", "",
         "One sample after each engine restart and readiness; startup excluded. Source/OS/storage caches are retained and uncontrolled. "
@@ -76,6 +79,15 @@ def main():
             values = [next((extract(s) for s in r[field] if s["engine"] == "neura" and s["workload"] == name), None)
                 for r in (old, revised, cached)]
             lines.append(f"| {name} | " + " | ".join(map(fmt, values)) + " |")
+    lines += ["", "## Concurrent local aggregation diagnostics", "",
+        "Spill counts below mean queries whose final physical-plan metrics include a nonzero spill count. "
+        "Partition targets are chosen at admission; already-running plans retain their target.", "",
+        "| Profile | Queries that spilled | Admission targets observed |", "|---|---:|---|"]
+    for label, report in [("Earlier Neura", old), ("Revised, cache off", revised), ("Revised, cache 32 MiB", cached)]:
+        batch = next(t for t in report["throughput"] if t["engine"] == "neura" and t["workload"] == "local_high_cardinality")
+        spills = sum(any(int(n) > 0 for n in re.findall(r"spill_count=(\d+)", s["diagnostic"]["physical_plan"])) for s in batch["samples"])
+        targets = sorted({s["diagnostic"].get("selected_partitions") for s in batch["samples"]} - {None})
+        lines.append(f"| {label} | {spills}/{len(batch['samples'])} | {', '.join(map(str, targets)) or 'not recorded'} |")
     lines += ["", "## Warm S3 diagnostics", "",
         "Each row is the final successful warm query. Source request counters include instrumented scan operations, "
         "as in the original suite. `response_bytes` counts origin payload bytes; cache bytes are reported separately.", "",

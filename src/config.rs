@@ -24,12 +24,15 @@ pub struct Limits {
     pub max_remote_page_mb: usize,
     pub max_output_mb: usize,
     pub partitions: usize,
+    /// Divide the per-query partition target by admitted queries at planning.
+    /// This heuristic cannot resize running plans or impose a global CPU cap.
+    pub adaptive_partitions: bool,
     pub spill_dir: String,
     pub diagnostic_history: usize,
     pub max_spill_mb: u64,
     pub sort_merge_reservation_mb: usize,
     pub parquet_row_filter_pushdown: bool,
-    /// S3 read-ahead window; zero disables adaptive read-ahead.
+    /// Maximum adaptive S3 read-ahead window; zero disables read-ahead.
     pub s3_read_ahead_kb: usize,
     /// Per-query cap, reserved from the shared execution memory pool.
     pub s3_read_ahead_budget_mb: usize,
@@ -48,12 +51,13 @@ impl Default for Limits {
             max_remote_page_mb: 32,
             max_output_mb: 128,
             partitions: 4,
+            adaptive_partitions: true,
             spill_dir: "/tmp/neura-spill".into(),
             diagnostic_history: 100,
             max_spill_mb: 4096,
             sort_merge_reservation_mb: 16,
             parquet_row_filter_pushdown: false,
-            s3_read_ahead_kb: 256,
+            s3_read_ahead_kb: 1024,
             s3_read_ahead_budget_mb: 2,
             file_cache_mb: 0,
             file_cache_max_object_mb: 8,

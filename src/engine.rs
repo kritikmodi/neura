@@ -47,6 +47,8 @@ pub struct Diagnostic {
     pub error: Option<String>,
     pub memory_pool_reserved_bytes: usize,
     pub file_cache_resident_bytes: usize,
+    /// Fixed target chosen when this query was admitted, not a thread count.
+    pub selected_partitions: usize,
     pub phases: PhaseTimings,
 }
 /// Wall-clock phases, not CPU time. Execution includes consumer backpressure;
@@ -238,12 +240,27 @@ impl Engine {
             update(&mut entry.diagnostic.phases);
         }
     }
+    fn admitted_partitions(&self) -> usize {
+        let limits = &self.config.limits;
+        if !limits.adaptive_partitions {
+            return limits.partitions;
+        }
+        // This is a planning heuristic, not a global CPU semaphore. Existing
+        // plans retain their targets; I/O-bound and backpressured queries also
+        // hold admission slots. The hard query and memory limits are unchanged.
+        let admitted = limits
+            .max_concurrent_queries
+            .saturating_sub(self.slots.available_permits())
+            .max(1);
+        (limits.partitions / admitted).max(1)
+    }
     async fn context(
         &self,
         sql: &str,
         metrics: Metrics,
         cancel: CancellationToken,
         id: &str,
+        partitions: usize,
     ) -> Result<(SessionContext, Vec<Arc<connectors::postgres::Session>>)> {
         let l = &self.config.limits;
         let runtime = Arc::new(
@@ -259,7 +276,7 @@ impl Engine {
                 .build()?,
         );
         let mut config = SessionConfig::new()
-            .with_target_partitions(l.partitions)
+            .with_target_partitions(partitions)
             .with_batch_size(l.batch_rows)
             .with_information_schema(true);
         config.options_mut().execution.parquet.pushdown_filters = l.parquet_row_filter_pushdown;
@@ -427,6 +444,7 @@ impl Engine {
             .try_acquire_owned()
             .context("query concurrency limit reached")?;
         let started = Instant::now();
+        let selected_partitions = self.admitted_partitions();
         let deadline = tokio::time::Instant::now()
             + Duration::from_secs(self.config.limits.query_timeout_secs);
         let cancel = CancellationToken::new();
@@ -459,6 +477,7 @@ impl Engine {
                         error: None,
                         memory_pool_reserved_bytes: 0,
                         file_cache_resident_bytes: 0,
+                        selected_partitions,
                         phases: PhaseTimings::default(),
                     },
                     cancel: cancel.clone(),
@@ -478,7 +497,7 @@ impl Engine {
          _=cancel.cancelled()=>Err(anyhow::anyhow!("query cancelled")),
          r=tokio::time::timeout_at(deadline,async{
           let phase = Instant::now();
-          let context = self.context(sql,metrics,cancel.clone(),&id).await;
+          let context = self.context(sql,metrics,cancel.clone(),&id,selected_partitions).await;
           self.record_phase(&id, |p| p.catalog_ms = phase.elapsed().as_secs_f64() * 1000.);
           let (ctx, postgres_sessions) = context?;
           let phase = Instant::now();
@@ -574,12 +593,19 @@ impl Engine {
             .try_acquire_owned()
             .context("query concurrency limit reached")?;
         let token = CancellationToken::new();
+        let selected_partitions = self.admitted_partitions();
         let _guard = token.clone().drop_guard();
         tokio::time::timeout(
             Duration::from_secs(self.config.limits.query_timeout_secs),
             async {
                 let (ctx, postgres_sessions) = self
-                    .context(sql, Metrics::default(), token, "describe")
+                    .context(
+                        sql,
+                        Metrics::default(),
+                        token,
+                        "describe",
+                        selected_partitions,
+                    )
                     .await?;
                 let df = ctx.sql(sql).await?;
                 let schema = Arc::new(df.schema().as_arrow().clone());
@@ -695,6 +721,54 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn partition_targets_follow_admission_without_mutating_running_plans() {
+        let mut config: Config = toml::from_str("").unwrap();
+        config.limits.partitions = 2;
+        config.limits.max_concurrent_queries = 3;
+        config.limits.adaptive_partitions = true;
+        let engine = Engine::new(config).unwrap();
+        let mut first = engine.query("SELECT 1").await.unwrap();
+        let second = engine.query("SELECT 2").await.unwrap();
+        let third = engine.query("SELECT 3").await.unwrap();
+        assert_eq!(engine.diagnostic(&first.id).unwrap().selected_partitions, 2);
+        assert_eq!(
+            engine.diagnostic(&second.id).unwrap().selected_partitions,
+            1
+        );
+        assert_eq!(engine.diagnostic(&third.id).unwrap().selected_partitions, 1);
+        assert!(engine.query("SELECT 4").await.is_err());
+        assert!(engine.cancel(&first.id));
+        assert!(first.stream.next().await.unwrap().is_err());
+        drop(first);
+        // Targets belong to immutable plans, even when an earlier query exits.
+        assert_eq!(
+            engine.diagnostic(&second.id).unwrap().selected_partitions,
+            1
+        );
+        drop(second);
+        drop(third);
+        let (id, _) = engine.collect("SELECT 4").await.unwrap();
+        assert_eq!(engine.diagnostic(&id).unwrap().selected_partitions, 2);
+        assert_eq!(engine.pool.reserved(), 0);
+    }
+
+    #[tokio::test]
+    async fn adaptive_partitioning_can_be_disabled() {
+        let config: Config = toml::from_str(
+            "[limits]\npartitions=2\nmax_concurrent_queries=2\nadaptive_partitions=false",
+        )
+        .unwrap();
+        let engine = Engine::new(config).unwrap();
+        let first = engine.query("SELECT 1").await.unwrap();
+        let second = engine.query("SELECT 2").await.unwrap();
+        assert_eq!(engine.diagnostic(&first.id).unwrap().selected_partitions, 2);
+        assert_eq!(
+            engine.diagnostic(&second.id).unwrap().selected_partitions,
+            2
+        );
+    }
+
+    #[tokio::test]
     async fn unreferenced_parquet_is_not_opened_and_contexts_stay_isolated() {
         use datafusion::{
             arrow::{
@@ -715,7 +789,12 @@ mod tests {
             ArrowWriter::try_new(std::fs::File::create(&path).unwrap(), schema, None).unwrap();
         writer.write(&batch).unwrap();
         writer.close().unwrap();
+        let second_path = directory.path().join("more-rows.parquet");
+        std::fs::copy(&path, &second_path).unwrap();
         let mut config: Config = toml::from_str("").unwrap();
+        config.limits.partitions = 2;
+        config.limits.max_concurrent_queries = 2;
+        config.limits.adaptive_partitions = true;
         let table = |name: &str, path: String| crate::config::Table {
             name: name.into(),
             remote: None,
@@ -740,6 +819,12 @@ mod tests {
                 ),
             ],
         });
+        let mut parallel = table("parallel", path.to_string_lossy().into_owned());
+        parallel.files.push(crate::config::FilePin {
+            path: second_path.to_string_lossy().into_owned(),
+            etag: None,
+        });
+        config.sources[0].tables.push(parallel);
         let engine = Engine::new(config).unwrap();
         let sql = "WITH x AS (SELECT n FROM datafusion.lake.available) SELECT SUM(n) FROM x";
         let (a, b) = tokio::join!(engine.collect(sql), engine.collect(sql));
@@ -749,6 +834,35 @@ mod tests {
                 crate::api::row(&batches[0], 0).unwrap(),
                 vec![Some("6".into())]
             );
+        }
+        let first = engine
+            .query("SELECT SUM(n) FROM lake.parallel")
+            .await
+            .unwrap();
+        let second = engine
+            .query("SELECT SUM(n) FROM lake.parallel")
+            .await
+            .unwrap();
+        assert!(
+            engine
+                .diagnostic(&first.id)
+                .unwrap()
+                .physical_plan
+                .unwrap()
+                .contains("file_groups={2 groups")
+        );
+        assert!(
+            engine
+                .diagnostic(&second.id)
+                .unwrap()
+                .physical_plan
+                .unwrap()
+                .contains("file_groups={1 group")
+        );
+        for mut query in [first, second] {
+            let batch = query.stream.next().await.unwrap().unwrap();
+            assert_eq!(crate::api::row(&batch, 0).unwrap(), vec![Some("12".into())]);
+            assert!(query.stream.next().await.is_none());
         }
         assert!(
             engine

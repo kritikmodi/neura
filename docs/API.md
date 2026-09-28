@@ -15,7 +15,7 @@ Supply a UUID before submission to make cancellation possible during planning. Q
 Configuration is immutable during a server run. Change configuration and restart to manage sources; dynamic source CRUD and distributed durable query history are not implemented. A single token authorizes the configured service identity. Frontend SQL is limited to one SELECT/EXPLAIN SELECT; arbitrary DDL, DML, COPY, functions loading files, and session mutation are not exposed.
 
 Diagnostics include `phases` (`catalog_ms`, `logical_plan_ms`, `optimize_ms`,
-`physical_plan_ms`, `execution_ms`, `cleanup_ms`) and `file_cache_resident_bytes`.
+`physical_plan_ms`, `execution_ms`, `cleanup_ms`), `selected_partitions`, and `file_cache_resident_bytes`.
 Execution time includes consumer backpressure. Source counters include
 `read_ahead_hits`, `read_ahead_bytes`, `cache_hits`, `cache_misses`, `cache_bytes`
 and `cache_evictions`; origin `response_bytes` excludes cached bytes. Memory

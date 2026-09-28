@@ -2,7 +2,9 @@
 //!
 //! The first ranges are fetched exactly. Only a forward sequence of nearby reads
 //! activates read-ahead, so a selective first row group does not fetch a large
-//! prefix. This is an I/O buffer, not a reusable authorization or object cache:
+//! prefix. Windows start at no more than 256 KiB and grow toward the configured
+//! maximum only after sustained forward hits consume most of the current span.
+//! This is an I/O buffer, not a reusable authorization or object cache:
 //! the owner is a single query's manifest-pinned object store.
 
 use bytes::{Bytes, BytesMut};
@@ -71,24 +73,69 @@ impl Drop for BufferReservation {
     }
 }
 
-#[derive(Default)]
 struct AccessPattern {
     previous: Option<Range<u64>>,
     nearby_reads: usize,
     size: Option<u64>,
+    window: usize,
+    progress: Option<WindowProgress>,
+}
+
+struct WindowProgress {
+    range: Range<u64>,
+    hits: usize,
+    furthest_end: u64,
 }
 
 impl AccessPattern {
-    fn observe(&mut self, range: &Range<u64>, gap: u64) {
+    fn new(window: usize) -> Self {
+        Self {
+            previous: None,
+            nearby_reads: 0,
+            size: None,
+            window,
+            progress: None,
+        }
+    }
+
+    fn observe(&mut self, range: &Range<u64>, gap: u64, initial_window: usize) -> bool {
         let nearby = self.previous.as_ref().is_some_and(|last| {
             range.start > last.start && range.start <= last.end.saturating_add(gap)
         });
-        self.nearby_reads = if nearby {
-            self.nearby_reads.saturating_add(1)
-        } else {
-            0
-        };
+        if nearby {
+            self.nearby_reads = self.nearby_reads.saturating_add(1);
+        } else if self.previous.as_ref() != Some(range) {
+            self.nearby_reads = 0;
+            self.window = initial_window;
+            self.progress = None;
+        }
         self.previous = Some(range.clone());
+        nearby
+    }
+
+    fn hit(&mut self, buffer: &Range<u64>, returned_end: u64) {
+        if let Some(progress) = &mut self.progress
+            && progress.range == *buffer
+        {
+            progress.hits = progress.hits.saturating_add(1);
+            progress.furthest_end = progress.furthest_end.max(returned_end);
+        }
+    }
+
+    fn next_window(&self, request: &Range<u64>, gap: u64, maximum: usize) -> usize {
+        let consumed = self.progress.as_ref().is_some_and(|progress| {
+            let span = progress.range.end - progress.range.start;
+            let extent = progress.furthest_end - progress.range.start;
+            progress.hits >= 8
+                && extent >= span - span / 4
+                && request.start >= progress.range.end.saturating_sub(gap)
+                && request.start <= progress.range.end.saturating_add(gap)
+        });
+        if consumed {
+            self.window.saturating_mul(2).min(maximum)
+        } else {
+            self.window
+        }
     }
 }
 
@@ -103,7 +150,8 @@ struct Buffer {
 
 pub(super) struct ReadAhead {
     budget: Arc<ReadAheadBudget>,
-    window: usize,
+    initial_window: usize,
+    maximum_window: usize,
     patterns: HashMap<Path, tokio::sync::Mutex<AccessPattern>>,
     buffers: Mutex<VecDeque<Buffer>>,
     metrics: Metrics,
@@ -134,11 +182,21 @@ impl ReadAhead {
         metrics: Metrics,
         source: String,
     ) -> Self {
+        let initial_window = window.min(256 * 1024).min(budget.limit);
+        // Growth leaves room for two active objects. A deliberately small
+        // configured window may still use the entire budget, as before.
+        let maximum_window = window.min((budget.limit / 2).max(initial_window));
         Self {
             budget,
-            window,
+            initial_window,
+            maximum_window,
             patterns: paths
-                .map(|path| (path, tokio::sync::Mutex::new(AccessPattern::default())))
+                .map(|path| {
+                    (
+                        path,
+                        tokio::sync::Mutex::new(AccessPattern::new(initial_window)),
+                    )
+                })
                 .collect(),
             buffers: Mutex::new(VecDeque::new()),
             metrics,
@@ -162,7 +220,7 @@ impl ReadAhead {
             Some(GetRange::Bounded(range)) if range.start < range.end => range.clone(),
             _ => return fetch(opts).await,
         };
-        let max_small = (self.window / 4).min(64 * 1024) as u64;
+        let max_small = (self.initial_window / 4).min(64 * 1024) as u64;
         if opts.head
             || opts.version.is_some()
             || opts.if_none_match.is_some()
@@ -183,7 +241,7 @@ impl ReadAhead {
         // Serialize same-object small reads only. Different objects retain their
         // concurrency, and cancellation drops this guard and any reservation.
         let mut pattern = pattern.lock().await;
-        pattern.observe(&request, max_small);
+        let forward = pattern.observe(&request, max_small, self.initial_window);
         {
             let mut buffers = self.buffers.lock().unwrap();
             if let Some(index) = buffers.iter().position(|entry| {
@@ -201,18 +259,22 @@ impl ReadAhead {
                 let answer = result(
                     entry.meta.clone(),
                     entry.attributes.clone(),
-                    returned,
+                    returned.clone(),
                     Bytes::copy_from_slice(&entry.bytes[start..end]),
                 );
+                if forward {
+                    pattern.hit(&entry.range, returned.end);
+                }
                 buffers.push_back(entry);
                 self.metrics
                     .update(&self.source, |m| m.read_ahead_hits += 1);
                 return Ok(answer);
             }
         }
+        let window = pattern.next_window(&request, max_small, self.maximum_window);
         let end = request
             .start
-            .saturating_add(self.window as u64)
+            .saturating_add(window as u64)
             .min(pattern.size.unwrap_or(request.end));
         if pattern.nearby_reads < 2 || end <= request.end {
             let answer = fetch(opts).await?;
@@ -265,6 +327,12 @@ impl ReadAhead {
         }
         pattern.size = Some(meta.size);
         let returned = request.start..request.end.min(meta.size);
+        pattern.window = window;
+        pattern.progress = Some(WindowProgress {
+            range: range.clone(),
+            hits: 0,
+            furthest_end: returned.end,
+        });
         let answer = result(
             meta.clone(),
             attributes.clone(),
@@ -305,9 +373,13 @@ mod tests {
 
     impl Fixture {
         async fn new(limit: usize) -> Self {
+            Self::with_window(limit, 64, 1024).await
+        }
+
+        async fn with_window(limit: usize, window: usize, length: usize) -> Self {
             let store = Arc::new(InMemory::new());
             let path = Path::from("orders.parquet");
-            let bytes = Bytes::from((0..1024).map(|n| (n % 251) as u8).collect::<Vec<_>>());
+            let bytes = Bytes::from((0..length).map(|n| (n % 251) as u8).collect::<Vec<_>>());
             store.put(&path, bytes.clone().into()).await.unwrap();
             let tag = store.head(&path).await.unwrap().e_tag.unwrap();
             let pool: Arc<dyn MemoryPool> = Arc::new(GreedyMemoryPool::new(limit));
@@ -315,7 +387,7 @@ mod tests {
             let reader = Arc::new(ReadAhead::new(
                 std::iter::once(path.clone()),
                 budget.clone(),
-                64,
+                window,
                 Metrics::default(),
                 "s3".into(),
             ));
@@ -521,5 +593,198 @@ mod tests {
             response,
             Err(object_store::Error::NotModified { .. })
         ));
+    }
+
+    #[tokio::test]
+    async fn sustained_forward_consumption_grows_windows_within_query_budget() {
+        let fixture = Fixture::with_window(2 * 1024 * 1024, 1024 * 1024, 3 * 1024 * 1024).await;
+        for start in (0..800 * 1024).step_by(4096) {
+            assert_eq!(
+                fixture.get(start..start + 4096).await.unwrap(),
+                fixture.bytes.slice(start as usize..start as usize + 4096)
+            );
+            assert!(fixture.pool.reserved() <= 2 * 1024 * 1024);
+            assert!(fixture.budget.used.load(Ordering::Acquire) <= 2 * 1024 * 1024);
+        }
+        assert_eq!(
+            fixture
+                .requests
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|range| range.end - range.start)
+                .collect::<Vec<_>>(),
+            vec![4096, 4096, 256 * 1024, 512 * 1024, 1024 * 1024]
+        );
+        assert_eq!(fixture.pool.reserved(), 1792 * 1024);
+    }
+
+    #[tokio::test]
+    async fn selective_prefix_and_sparse_hits_do_not_grow_windows() {
+        let fixture = Fixture::with_window(2 * 1024 * 1024, 1024 * 1024, 3 * 1024 * 1024).await;
+        // Many hits in a small prefix do not demonstrate consumption of 75%.
+        for start in (0..64 * 1024).step_by(4096) {
+            fixture.get(start..start + 4096).await.unwrap();
+        }
+        let pattern = fixture.reader.patterns[&fixture.path].lock().await;
+        assert_eq!(pattern.window, 256 * 1024);
+        assert!(pattern.progress.as_ref().unwrap().hits >= 8);
+        assert_eq!(
+            pattern.next_window(&(264 * 1024..268 * 1024), 64 * 1024, 1024 * 1024),
+            256 * 1024
+        );
+        drop(pattern);
+        assert_eq!(fixture.requests.lock().unwrap().len(), 3);
+
+        // Covering most of a window with only four hits is insufficient too.
+        let sparse = Fixture::with_window(2 * 1024 * 1024, 1024 * 1024, 3 * 1024 * 1024).await;
+        for start in [0, 4, 8, 68, 128, 188, 248, 264].map(|kib| kib * 1024) {
+            sparse.get(start..start + 4096).await.unwrap();
+        }
+        assert_eq!(
+            sparse
+                .requests
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|range| range.end - range.start)
+                .collect::<Vec<_>>(),
+            vec![4096, 4096, 256 * 1024, 256 * 1024]
+        );
+    }
+
+    #[tokio::test]
+    async fn random_and_backward_access_reset_growth_and_objects_are_independent() {
+        let mut fixture = Fixture::with_window(2 * 1024 * 1024, 1024 * 1024, 3 * 1024 * 1024).await;
+        let other = Path::from("another-object.parquet");
+        fixture
+            .store
+            .put(&other, fixture.bytes.clone().into())
+            .await
+            .unwrap();
+        let tag = fixture.store.head(&other).await.unwrap().e_tag.unwrap();
+        fixture.reader = Arc::new(ReadAhead::new(
+            [fixture.path.clone(), other.clone()].into_iter(),
+            fixture.budget.clone(),
+            1024 * 1024,
+            Metrics::default(),
+            "s3".into(),
+        ));
+        for start in (0..800 * 1024).step_by(4096) {
+            fixture.get(start..start + 4096).await.unwrap();
+        }
+        assert_eq!(
+            fixture.reader.patterns[&fixture.path].lock().await.window,
+            1024 * 1024
+        );
+        fixture.get(0..4096).await.unwrap();
+        assert_eq!(
+            fixture.reader.patterns[&fixture.path].lock().await.window,
+            256 * 1024
+        );
+        for start in [2400, 2404, 2408].map(|kib| kib * 1024) {
+            fixture.get(start..start + 4096).await.unwrap();
+        }
+        {
+            let requests = fixture.requests.lock().unwrap();
+            let final_request = requests.last().unwrap();
+            assert_eq!(final_request.end - final_request.start, 256 * 1024);
+        }
+
+        // Another manifest object starts conservatively even with the same
+        // query budget and a previously-promoted object in this store.
+        let requests = Mutex::new(vec![]);
+        for start in [0, 4096, 8192] {
+            let opts = GetOptions {
+                range: Some(GetRange::Bounded(start..start + 4096)),
+                if_match: Some(tag.clone()),
+                ..Default::default()
+            };
+            fixture
+                .reader
+                .get(&other, opts, |opts| async {
+                    let Some(GetRange::Bounded(range)) = &opts.range else {
+                        panic!("bounded request")
+                    };
+                    requests.lock().unwrap().push(range.clone());
+                    fixture.store.get_opts(&other, opts).await
+                })
+                .await
+                .unwrap()
+                .bytes()
+                .await
+                .unwrap();
+        }
+        assert_eq!(
+            requests.lock().unwrap().last().unwrap().end - 8192,
+            256 * 1024
+        );
+        assert!(fixture.pool.reserved() <= 2 * 1024 * 1024);
+    }
+
+    #[tokio::test]
+    async fn grown_window_reservation_is_released_on_cancellation_or_origin_error() {
+        let fixture = Fixture::with_window(2 * 1024 * 1024, 1024 * 1024, 3 * 1024 * 1024).await;
+        for start in (0..776 * 1024).step_by(4096) {
+            fixture.get(start..start + 4096).await.unwrap();
+        }
+        let baseline = fixture.pool.reserved();
+        assert_eq!(baseline, 768 * 1024);
+        let reader = fixture.reader.clone();
+        let path = fixture.path.clone();
+        let opts = fixture.opts(776 * 1024..780 * 1024);
+        let started = Arc::new(tokio::sync::Notify::new());
+        let signal = started.clone();
+        let task = tokio::spawn(async move {
+            reader
+                .get(&path, opts, |opts| async move {
+                    let Some(GetRange::Bounded(range)) = opts.range else {
+                        panic!("bounded request")
+                    };
+                    assert_eq!(range.end - range.start, 1024 * 1024);
+                    signal.notify_one();
+                    std::future::pending::<object_store::Result<GetResult>>().await
+                })
+                .await
+        });
+        started.notified().await;
+        assert_eq!(fixture.pool.reserved(), baseline + 1024 * 1024);
+        task.abort();
+        let _ = task.await;
+        assert_eq!(fixture.pool.reserved(), baseline);
+        assert_eq!(fixture.budget.used.load(Ordering::Acquire), baseline);
+        fixture
+            .store
+            .put(&fixture.path, "replacement".into())
+            .await
+            .unwrap();
+        assert!(matches!(
+            fixture.get(776 * 1024..780 * 1024).await,
+            Err(object_store::Error::Precondition { .. })
+        ));
+        assert_eq!(fixture.pool.reserved(), baseline);
+        assert_eq!(fixture.budget.used.load(Ordering::Acquire), baseline);
+    }
+
+    #[test]
+    fn configured_maximum_and_budget_cap_initial_size_and_growth() {
+        let pool: Arc<dyn MemoryPool> = Arc::new(GreedyMemoryPool::new(2 * 1024 * 1024));
+        for (budget, maximum, initial, expected_maximum) in [
+            (2 * 1024 * 1024, 4 * 1024 * 1024, 256 * 1024, 1024 * 1024),
+            (256 * 1024, 1024 * 1024, 256 * 1024, 256 * 1024),
+            (64, 64, 64, 64),
+            (32, 64, 32, 32),
+            (0, 64, 0, 0),
+        ] {
+            let reader = ReadAhead::new(
+                std::iter::empty(),
+                Arc::new(ReadAheadBudget::new(pool.clone(), budget)),
+                maximum,
+                Metrics::default(),
+                "s3".into(),
+            );
+            assert_eq!(reader.initial_window, initial);
+            assert_eq!(reader.maximum_window, expected_maximum);
+        }
     }
 }

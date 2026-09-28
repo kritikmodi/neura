@@ -12,8 +12,9 @@ groups to use bytes already fetched for the query. Isolated selective reads and
 large ranges remain exact. Every origin read still uses the manifest's conditional
 ETag. Wildcard and alternative ETag lists are rejected.
 
-The default window is 256 KiB, with a 2 MiB cap shared by S3 sources within one
-query. Buffers reserve the shared DataFusion pool, are evicted under pressure,
+The initial window is at most 256 KiB; dense forward consumption can grow it to
+the configured maximum (1 MiB by default). A 2 MiB cap is shared by S3 sources
+within one query. Buffers reserve the shared DataFusion pool, are evicted under pressure,
 and are released on cancellation. If reservation fails, the reader falls back
 to an exact range. Read-ahead can transfer unused columns or rows inside a window;
 it is a bounded network-request/byte tradeoff, not a replacement for pruning.
@@ -27,8 +28,9 @@ Caching is disabled by default. To enable it explicitly:
 memory_mb = 512
 file_cache_mb = 32
 file_cache_max_object_mb = 8
-s3_read_ahead_kb = 256
+s3_read_ahead_kb = 1024
 s3_read_ahead_budget_mb = 2
+adaptive_partitions = true
 ```
 
 The cache receives 32 MiB and the execution pool receives the remaining 480 MiB.
@@ -76,10 +78,31 @@ Queries sharing one source snapshot continue to serialize on that source
 connection. This change does not introduce independent snapshots for parallel
 pieces of a single source query.
 
+## Concurrent local execution
+
+`partitions` is the maximum query parallelism. With `adaptive_partitions = true`
+(the default), a query admitted alongside other queries receives
+`max(1, partitions / admitted_queries)` target partitions. The choice is fixed
+before catalog/planning work and recorded as `selected_partitions`. Existing
+plans are not modified when another query arrives; isolated queries retain the
+configured width. Set the option to false for fixed per-query parallelism.
+
+This reduces aggregate/repartition consumers competing for DataFusion's fair-share
+spill allowance. In the control workload, reducing partition count avoided
+unnecessary spills and improved concurrent throughput at a lower resident-memory
+peak, but slowed an isolated query. Admission-aware selection addresses that
+tradeoff; it is a heuristic, not a strict global thread budget. Early arrivals
+can retain wider plans, waiting or backpressured queries still count, and more
+admitted queries than CPUs can still oversubscribe the machine. Validate it with
+the deployment's mix of scans, remote I/O and local operators.
+
 ## Measurement
 
 Source diagnostics separate origin response bytes, reusable-cache bytes,
-cache hit/miss/eviction counts and read-ahead hits/extra bytes. Request counters
+cache hit/miss/eviction counts and read-ahead hits/additional buffered bytes.
+`read_ahead_bytes` counts bytes beyond the range that triggered a prefetch; these
+can come from the file cache and can be consumed by later reads. It is not a
+network-byte or permanently-wasted-byte counter. Request counters
 also include instrumented source scan/estimate operations; they are not exact
 S3 billing counters. Engine phase timings separate setup, logical planning,
 optimization, physical planning, execution and cleanup. Execution includes client
