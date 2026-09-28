@@ -2,7 +2,53 @@
 
 Validation performed on 2026-09-28 in the separate `/Users/kritikmodi/Neura` repository. CompanyBrain was not read or modified. Local host: Apple Silicon, macOS, 36 GiB physical RAM; Linux arm64 containers run under Docker Desktop. Rust 1.98.1, DataFusion 53.1.0, Arrow 58.4.0, Iceberg Rust 0.10.1. Dependency versions are locked in `Cargo.lock`.
 
-## Completed checks
+## Optimization validation
+
+The final optimization implementation is source commit `bf18760`. Its release
+image is `neura:optimized-v2`, ID
+`sha256:5dccf623ccc44a6066b4b7552447db193ed112366ce537acb1a5be3a45c92939`.
+Subsequent changes publish reports and documentation; the raw benchmark records
+retain source and configuration hashes.
+
+| Check | Final result / scope |
+|---|---|
+| Default unit/config tests | 51 library tests and two connector/config tests passed; `cargo test --all-targets --locked`. Two credential-dependent PostgreSQL pool tests were skipped in this ordinary run, then run explicitly below |
+| Real PostgreSQL pool | Both tests passed: bounded checkout, connection reuse with a fresh repeatable-read snapshot, live RLS/role/permission checks, reset state, cancellation and abandoned-session discard |
+| Real PostgreSQL × S3 | All six local federation tests passed, including early cross-source `LIMIT` termination followed by a new PostgreSQL query; existing pruning, permissions, snapshot and cancellation cases retained |
+| Real S3 cache | Pinned-object replacement/deletion invalidation test passed against SeaweedFS; a unique temporary object was cleaned up. Unit tests additionally cover GET denial despite allowed HEAD, credential/session rotation, scope isolation, concurrent fills, malformed bodies, cancellation and retained-allocation accounting |
+| Real ClickHouse / Iceberg | All four ClickHouse and both Iceberg tests rerun and passed on the final implementation |
+| Real spill | Four-million-row sort test passed with correct ordering/count/sum and nonzero spill metrics |
+| Cube compatibility | Actual Cube PostgreSQL driver and node-postgres integration passed against the optional wire build |
+| Static/build checks | Default and `postgres-wire` clippy with `-D warnings`, formatting, Python syntax, diff checks and Linux arm64 release-image build passed |
+| Final benchmark profiles | **250/250** result checks passed across the two eight-workload profiles; both also passed live PostgreSQL RLS and denied-table probes with source logs |
+| Tuning controls | **382/382** additional result checks passed across five separately retained control profiles; these are not final-release results |
+
+Commands for the explicitly enabled local checks, after `source scripts/test-env.sh`:
+
+```sh
+cargo test --lib postgres_pool -- --ignored --test-threads=1
+cargo test --test federation -- --ignored --skip cloud_connectors --test-threads=1
+cargo test --test storage_cache -- --ignored --test-threads=1
+cargo test --test clickhouse -- --ignored --test-threads=1
+cargo test --test iceberg -- --ignored --test-threads=1
+scripts/wire-integration.sh
+```
+
+The [final measurements](benchmark-results/2026-09-28-optimizations.md) show
+substantial S3-request and warm PostgreSQL overhead improvements, but no general
+peak-memory win. Default local aggregation high-water RSS rose from 208 to
+237 MiB while throughput improved from 9.7 to 22.3 queries/s. The cache remains
+opt-in because measured latency did not consistently improve. Historical
+Spark/DuckDB measurements were not rerun alongside these final Neura profiles.
+Raw tuning controls and the temporary demo pause/restoration record are linked
+from the report. The original demo was restored healthy after measurement; it
+still runs its original image, rather than the new optimized image.
+
+Cloud acceptance remains blocked exactly as listed below. Local permission and
+cache tests do not certify AWS IAM/STS, production network failures or all
+concurrent-mutation cases.
+
+## Initial implementation checks (before optimization)
 
 | Check | Evidence / scope |
 |---|---|
@@ -43,8 +89,8 @@ Use read-only principals with deliberately denied tables and known reference res
 
 ## Benchmark interpretation
 
-The newer [Neura/Spark/DuckDB suite](benchmark-results/2026-09-28-spark-duckdb.md)
-uses the unchanged Neura engine, Spark 3.5.6 and DuckDB 1.5.5. **375/375** baseline
+The earlier [Neura/Spark/DuckDB suite](benchmark-results/2026-09-28-spark-duckdb.md)
+used the pre-optimization Neura engine, Spark 3.5.6 and DuckDB 1.5.5. **375/375** baseline
 query-result checks passed (144 timed samples, 33 priming queries, 180 throughput
 requests and 18 separate memory-pass queries). A separately labelled DuckDB
 default-file-cache profile passed **97/97** checks. All engines passed real
@@ -67,6 +113,6 @@ The published baseline predates the REST-only default and used the wire compatib
 
 The reproducible harness and exact workload definitions are in `benchmarks/`. [Published measurements](benchmark-results/2026-09-28.md) include raw samples, image/source fingerprints and a separate idle RSS observation. All 90 latency samples and 30 throughput requests passed independent correctness checks. Each engine uses 2 CPUs and 2 GiB RAM with no additional swap. The same restricted source accounts, immutable fixture files and relational SQL are used.
 
-Warm federated-group medians: Neura 16,091.97 ms, Datatailr QE 31.36 ms, Spark 452.95 ms. At concurrency two, measured correct-query throughput was 0.095, 58.240 and 2.527 queries/s respectively. Neura is materially slower on this full-scan fixture. Its warm selective Parquet median was 83.61 ms; file/row-group pruning works, while cross-row-group read-ahead remains an optimization gap. This is an initial engine with measured limitations, not a performance replacement claim.
+Warm federated-group medians: Neura 16,091.97 ms, Datatailr QE 31.36 ms, Spark 452.95 ms. At concurrency two, measured correct-query throughput was 0.095, 58.240 and 2.527 queries/s respectively. The earlier Neura was materially slower on this full-scan fixture. Its warm selective Parquet median was 83.61 ms; file/row-group pruning worked, while cross-row-group read-ahead was then an optimization gap. These are historical measurements, not a performance replacement claim.
 
 Cold means **engine process restarted, storage caches uncontrolled**, after readiness checks. Warm means after a successful full priming query. There is no storage-cold claim. Cgroup peak memory includes startup and filesystem cache and is cumulative since each restart. This small local synthetic comparison cannot establish general superiority, production sizing, cloud egress economics or distributed scaling. See `benchmarks/README.md` for protocol and internal-memory-accounting differences.

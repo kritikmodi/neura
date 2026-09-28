@@ -138,6 +138,9 @@ python3 benchmarks/report_optimized.py \
   docs/benchmark-results/2026-09-28-spark-duckdb.json \
   results/optimized.json results/optimized-cache.json results/optimized.md \
   --duckdb-cache docs/benchmark-results/2026-09-28-duckdb-file-cache.json
+uv run --with matplotlib==3.10.6 benchmarks/plot_optimized.py \
+  docs/benchmark-results/2026-09-28-spark-duckdb.json \
+  results/optimized.json results/optimized-cache.json results/optimized.png
 ```
 
 Both profiles retain the same fixture and resource limits. The first uses the
@@ -151,6 +154,14 @@ them after measurement.
 
 The generated report explicitly labels earlier engine measurements as historical
 references. Do not describe them as a simultaneous rerun of Spark and DuckDB.
+
+The [published final profiles](../docs/benchmark-results/2026-09-28-optimizations.md)
+used source commit `bf18760`, image `neura:optimized-v2`, prefix `neura-final` and
+port 58122 (cache profile: 58124). Supply `--prefix neura-final --port-start 58122`
+to preparation to recreate those names in a clean setup; retained containers must
+not be replaced. All other limits/workloads remain as above. The report generator
+accepts `--chart PATH --controls PATH` to link a chart and tuning record. Source
+hashes and actual configuration sections in the raw JSON are authoritative.
 
 ## Official connector references
 

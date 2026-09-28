@@ -85,8 +85,20 @@ The container runs as an unprivileged user. The supplied deployment has CPU, mem
 [Performance controls](docs/PERFORMANCE.md) cover bounded adaptive S3 read-ahead,
 optional permission-checked file caching, and PostgreSQL connection reuse with
 fresh query snapshots. Cache capacity is deducted from the configured execution
-memory budget. The comparisons below describe the engine before those changes.
+memory budget. Admission-aware parallelism reduces concurrent spill pressure.
+
+The [optimization results](docs/benchmark-results/2026-09-28-optimizations.md)
+passed **250/250** final result checks. With caching off, the small-row-group join
+fell from 15.9 s to 292 ms warm, PostgreSQL aggregation from 40.7 to 2.8 ms, and
+local aggregation throughput rose from 9.7 to 22.3 queries/s at concurrency two.
+This is not an overall memory win: local aggregation's recorded high-water RSS
+rose from 208 to 237 MiB even though sampled RSS fell. The optional cache reduced
+origin payload bytes but did not consistently reduce latency; it stays off by
+default. Earlier engine observations are historical references, not simultaneous
+reruns. Raw results, tuning controls and limitations are included in the report.
+
+The comparisons below describe the engine before those changes.
 
 The [Neura / Spark / DuckDB comparison](docs/benchmark-results/2026-09-28-spark-duckdb.md) passed **472/472** result checks across its baseline and separate DuckDB default-file-cache profile. With identical 2 CPU / 2 GiB engine limits, Neura's local million-group aggregate was 57.7 ms warm versus DuckDB's 59.7 ms and Spark's 403.4 ms. Neura's S3 join was 15.9 s with small row groups and 260 ms with larger groups; source requests fell from 987 to 17. DuckDB's default file cache reduced its warm join to 19.1 ms on this small static fixture. Neura had lower observed resident memory in the measured cases, but is not the fastest engine overall. [Reproduce the suite](benchmarks/COMPARE.md); cold/warm definitions, raw samples, source-resource constraints and memory caveats are included.
 
-The [earlier QE / Spark comparison](docs/benchmark-results/2026-09-28.md) passed all 120 result checks. On its million-row, small-row-group fixture, Neura's warm federated aggregate median was 16.09 s, versus 31.36 ms for Datatailr QE and 452.95 ms for Spark under the same 2 CPU / 2 GiB container limits. Neura is substantially slower on this full-scan workload; ranged-read overhead remains a concrete optimization gap. Protocol/authentication and memory-accounting differences are documented with the raw results. No cloud performance or universal superiority claim is made.
+The [earlier QE / Spark comparison](docs/benchmark-results/2026-09-28.md) passed all 120 result checks. On its million-row, small-row-group fixture, Neura's warm federated aggregate median was 16.09 s, versus 31.36 ms for Datatailr QE and 452.95 ms for Spark under the same 2 CPU / 2 GiB container limits. The earlier Neura was substantially slower on this full-scan workload. Protocol/authentication and memory-accounting differences are documented with the raw results. No cloud performance or universal superiority claim is made.

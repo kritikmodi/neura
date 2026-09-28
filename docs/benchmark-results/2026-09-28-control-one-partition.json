@@ -1,0 +1,1823 @@
+{
+  "started_at": "2026-09-28T14:10:23.998842+00:00",
+  "git_commit": "6211223ec1102ad9deaeafaa9f7de0bd9245f6ec",
+  "fixture": {
+    "rows": 1000000,
+    "small": [
+      {
+        "path": "orders/part-0.parquet",
+        "etag": "\"f5ab4e809a866bf28f918acc80b43076\"",
+        "bytes": 3569066,
+        "sha256": "c9cceb7da156351ba8d3c8e97f6e5f37b4d243e26c57d495a3cd377253507660",
+        "row_groups": 489
+      },
+      {
+        "path": "orders/part-1.parquet",
+        "etag": "\"ee302c423d7e63166e9b113395a358b7\"",
+        "bytes": 3569633,
+        "sha256": "71b249512a56424a481dc22a35948e81542ebd1473f77cc6ab037284cc0b9a2a",
+        "row_groups": 489
+      }
+    ],
+    "large": [
+      {
+        "path": "benchmark-large/3edbf1b93dfc4b686f39fd9690a3c14afed5d4515e9700c46cca1f423939221b/part-0.parquet",
+        "etag": "\"eee6fbf37f880538868018d58bfcd6d7\"",
+        "bytes": 3114330,
+        "sha256": "3edbf1b93dfc4b686f39fd9690a3c14afed5d4515e9700c46cca1f423939221b",
+        "row_groups": 4
+      },
+      {
+        "path": "benchmark-large/5d4606a8b7b4472438b251322ada2a60f3f3bd22a88b650ac6054f979e57dcbc/part-1.parquet",
+        "etag": "\"a77e9d533b5321eb2ded1d1d1e131150\"",
+        "bytes": 3114424,
+        "sha256": "5d4606a8b7b4472438b251322ada2a60f3f3bd22a88b650ac6054f979e57dcbc",
+        "row_groups": 4
+      }
+    ]
+  },
+  "workloads": [
+    {
+      "name": "local_high_cardinality",
+      "sql": "SELECT COUNT(*) AS groups, SUM(total) AS total, SUM(n) AS rows FROM (SELECT order_id, SUM(amount) AS total, COUNT(*) AS n FROM local.orders GROUP BY order_id) t"
+    }
+  ],
+  "engines": {
+    "neura": {
+      "image": "neura:optimized",
+      "image_id": "sha256:0cf26b3d937313ae6cdac007bfae092d447c48c37ce3a47ebb06c9092e3335f4",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648,
+      "config_sha256": "0e92c70b3fa2ff37777e7030706f680cdc68e00726f01071b0607e2c057ce5b9",
+      "limits_toml": "file_cache_mb=0\nfile_cache_max_object_mb=8\ns3_read_ahead_kb=256\ns3_read_ahead_budget_mb=2\nmemory_mb=512\nmax_remote_page_mb=32\nmax_concurrent_queries=2\npartitions=1\nbatch_rows=4096\nquery_timeout_secs=120\nmax_spill_mb=4096\nspill_dir=\"/tmp/spill\"",
+      "metadata": {
+        "status": "ok",
+        "version": "0.1.0"
+      }
+    }
+  },
+  "samples": [
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 89.44866596721113,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 87.45025,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "ef0c346c-d164-4369-a231-fd8b0283fd3a",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 4.153708,
+          "cleanup_ms": 0.001458,
+          "execution_ms": 78.476083,
+          "logical_plan_ms": 0.6469590000000001,
+          "optimize_ms": 0.599584,
+          "physical_plan_ms": 3.3024579999999997
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.12\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=209ns, expr_1_eval_time=41ns, expr_2_eval_time=1ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=570.46\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=44.16\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=8.10\u00b5s, expr_1_eval_time=6.27\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.56ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=222.96\u00b5s, aggregation_time=6.39ms, emitting_time=47.50\u00b5s, time_calculating_group_ids=28.79ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=17.71\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=65.38\u00b5s, time_elapsed_processing=14.92ms, time_elapsed_scanning_total=77.43ms, time_elapsed_scanning_until_data=10.61ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 116.273792,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 93.5142079833895,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 91.694791,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "5e223f3f-dc76-4aa2-8511-d34d90b59830",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 3.134042,
+          "cleanup_ms": 0.001167,
+          "execution_ms": 84.36004199999999,
+          "logical_plan_ms": 0.31591600000000003,
+          "optimize_ms": 0.383625,
+          "physical_plan_ms": 3.3451660000000003
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.54\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=458ns, expr_1_eval_time=42ns, expr_2_eval_time=125ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=514.46\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=46.89\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=13.77\u00b5s, expr_1_eval_time=6.75\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.80ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=214.28\u00b5s, aggregation_time=4.36ms, emitting_time=36.29\u00b5s, time_calculating_group_ids=30.50ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=10.17\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=40.33\u00b5s, time_elapsed_processing=14.98ms, time_elapsed_scanning_total=82.63ms, time_elapsed_scanning_until_data=12.53ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 127.564707,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "warm",
+      "repeat": 0
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 105.82270915620029,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 103.53800000000001,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "b1bc75ca-e653-4a0b-a004-35f8817d9c37",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 4.30575,
+          "cleanup_ms": 0.00175,
+          "execution_ms": 94.66125,
+          "logical_plan_ms": 0.27349999999999997,
+          "optimize_ms": 0.34975,
+          "physical_plan_ms": 3.78175
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.25\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=416ns, expr_1_eval_time=42ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=623.41\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.84\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.38\u00b5s, expr_1_eval_time=6.52\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=36.50ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=266.80\u00b5s, aggregation_time=4.57ms, emitting_time=35.88\u00b5s, time_calculating_group_ids=32.90ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.96\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.50\u00b5s, time_elapsed_processing=15.86ms, time_elapsed_scanning_total=92.85ms, time_elapsed_scanning_until_data=12.49ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 145.974333,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "warm",
+      "repeat": 1
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 99.82104203663766,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 97.4645,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "44d06ba2-75a6-4cbe-8618-255a5b7e5b56",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 7.033875,
+          "cleanup_ms": 0.000875,
+          "execution_ms": 85.30083400000001,
+          "logical_plan_ms": 0.367959,
+          "optimize_ms": 0.45,
+          "physical_plan_ms": 4.118583999999999
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.71\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=583ns, expr_1_eval_time=208ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=590.75\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.57\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.27\u00b5s, expr_1_eval_time=7.05\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.86ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=241.45\u00b5s, aggregation_time=5.16ms, emitting_time=36.50\u00b5s, time_calculating_group_ids=29.93ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=14.09\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=32.42\u00b5s, time_elapsed_processing=15.00ms, time_elapsed_scanning_total=83.10ms, time_elapsed_scanning_until_data=12.91ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 132.76245799999998,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "warm",
+      "repeat": 2
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 85.01474978402257,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 82.996792,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "0ded4018-fec0-419c-a8ea-0906136cca54",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 4.3841660000000005,
+          "cleanup_ms": 0.00125,
+          "execution_ms": 73.966166,
+          "logical_plan_ms": 0.259792,
+          "optimize_ms": 0.360792,
+          "physical_plan_ms": 3.868625
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.38\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=333ns, expr_1_eval_time=41ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=542.54\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.92\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.35\u00b5s, expr_1_eval_time=6.34\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=30.66ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=199.47\u00b5s, aggregation_time=3.83ms, emitting_time=54.21\u00b5s, time_calculating_group_ids=27.55ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=10.71\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=27.29\u00b5s, time_elapsed_processing=14.02ms, time_elapsed_scanning_total=72.32ms, time_elapsed_scanning_until_data=12.13ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 112.235875,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "warm",
+      "repeat": 3
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 88.14387489110231,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 85.943417,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "4bc8de82-dcaf-4d5c-a5c6-8540f71dd868",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 4.27175,
+          "cleanup_ms": 0.001042,
+          "execution_ms": 76.96375,
+          "logical_plan_ms": 0.267417,
+          "optimize_ms": 0.38041699999999995,
+          "physical_plan_ms": 3.907666
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.12\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=250ns, expr_1_eval_time=42ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=533.08\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=37.62\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.66\u00b5s, expr_1_eval_time=5.90\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=30.37ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=197.10\u00b5s, aggregation_time=2.96ms, emitting_time=34.33\u00b5s, time_calculating_group_ids=27.96ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.29\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.63\u00b5s, time_elapsed_processing=14.28ms, time_elapsed_scanning_total=75.46ms, time_elapsed_scanning_until_data=11.74ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 118.82578999999998,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "warm",
+      "repeat": 4
+    }
+  ],
+  "primes": [
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 96.1001249961555,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 93.9865,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "db7baa58-b5ea-4eab-88e5-db2a5e7c79ea",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 4.239332999999999,
+          "cleanup_ms": 0.001042,
+          "execution_ms": 85.05766700000001,
+          "logical_plan_ms": 0.312708,
+          "optimize_ms": 0.368875,
+          "physical_plan_ms": 3.851584
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.33\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=291ns, expr_1_eval_time=41ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=532.01\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=53.63\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=18.65\u00b5s, expr_1_eval_time=7.62\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.31ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=243.47\u00b5s, aggregation_time=4.03ms, emitting_time=38.42\u00b5s, time_calculating_group_ids=30.15ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=10.84\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=27.67\u00b5s, time_elapsed_processing=16.27ms, time_elapsed_scanning_total=83.36ms, time_elapsed_scanning_until_data=10.96ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 130.078666,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "prime",
+      "repeat": 0
+    },
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "latency_ms": 91.16462501697242,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964",
+          "1000000"
+        ]
+      ],
+      "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+      "diagnostic": {
+        "arrow_bytes": 312,
+        "elapsed_ms": 88.63183400000001,
+        "error": null,
+        "file_cache_resident_bytes": 0,
+        "id": "0f60753a-0410-449e-bbdd-9c7623469851",
+        "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+        "memory_pool_reserved_bytes": 0,
+        "phases": {
+          "catalog_ms": 3.568708,
+          "cleanup_ms": 0.001375,
+          "execution_ms": 80.510541,
+          "logical_plan_ms": 0.519834,
+          "optimize_ms": 0.51125,
+          "physical_plan_ms": 3.3311669999999998
+        },
+        "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.62\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=459ns, expr_1_eval_time=167ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=665.09\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=45.45\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.49\u00b5s, expr_1_eval_time=7.37\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=32.18ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=205.95\u00b5s, aggregation_time=5.22ms, emitting_time=40.38\u00b5s, time_calculating_group_ids=28.73ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=10.67\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=28.33\u00b5s, time_elapsed_processing=15.09ms, time_elapsed_scanning_total=79.36ms, time_elapsed_scanning_until_data=12.25ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+        "rows": 1,
+        "sources": {
+          "local": {
+            "arrow_bytes": 16169088,
+            "cache_bytes": 0,
+            "cache_evictions": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "elapsed_ms": 122.03658099999998,
+            "read_ahead_bytes": 0,
+            "read_ahead_hits": 0,
+            "remote_bytes_processed": null,
+            "requests": 16,
+            "response_bytes": 7273422,
+            "rows": 1000000
+          }
+        },
+        "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+        "status": "succeeded"
+      },
+      "mode": "throughput_prime",
+      "repeat": 0
+    }
+  ],
+  "throughput": [
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "concurrency": 2,
+      "samples": [
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 89.30270909331739,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 86.995458,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "65f628b9-124d-4c4b-8c97-3e348fbdede8",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 2.707292,
+              "cleanup_ms": 0.000625,
+              "execution_ms": 81.639959,
+              "logical_plan_ms": 0.289875,
+              "optimize_ms": 0.394833,
+              "physical_plan_ms": 1.821958
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.17\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=250ns, expr_1_eval_time=125ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=671.33\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=44.50\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.79\u00b5s, expr_1_eval_time=7.37\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.78ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=216.25\u00b5s, aggregation_time=5.41ms, emitting_time=32.62\u00b5s, time_calculating_group_ids=33.61ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.25\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.42\u00b5s, time_elapsed_processing=15.80ms, time_elapsed_scanning_total=79.00ms, time_elapsed_scanning_until_data=8.52ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 114.641419,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 88.39812502264977,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 84.6745,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "bb12e296-5527-4b3b-99ff-2dbd053f8145",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 29392960,
+            "phases": {
+              "catalog_ms": 2.26475,
+              "cleanup_ms": 0.00125,
+              "execution_ms": 79.747417,
+              "logical_plan_ms": 0.273791,
+              "optimize_ms": 0.399042,
+              "physical_plan_ms": 1.7897919999999998
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.92\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=542ns, expr_1_eval_time=84ns, expr_2_eval_time=166ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=621.87\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=40.58\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=5.95\u00b5s, expr_1_eval_time=7.48\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.54ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=221.34\u00b5s, aggregation_time=2.54ms, emitting_time=44.38\u00b5s, time_calculating_group_ids=30.56ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.21\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=26.67\u00b5s, time_elapsed_processing=16.58ms, time_elapsed_scanning_total=78.69ms, time_elapsed_scanning_until_data=9.02ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 117.29108300000001,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 89.10337509587407,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 85.49087499999999,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "fe329883-ca64-47f6-b770-c7ef02066310",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 3.657042,
+              "cleanup_ms": 0.001833,
+              "execution_ms": 78.69604199999999,
+              "logical_plan_ms": 0.30208399999999996,
+              "optimize_ms": 0.37425,
+              "physical_plan_ms": 2.259417
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.58\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=292ns, expr_1_eval_time=125ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=740.38\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=53.05\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.59\u00b5s, expr_1_eval_time=7.78\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.14ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=234.68\u00b5s, aggregation_time=5.52ms, emitting_time=36.21\u00b5s, time_calculating_group_ids=33.00ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.34\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.33\u00b5s, time_elapsed_processing=15.45ms, time_elapsed_scanning_total=76.06ms, time_elapsed_scanning_until_data=9.81ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 110.295084,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 88.30829197540879,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 85.13775,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "83df9bf5-8846-45cc-b062-13219a6d8e58",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.412292,
+              "cleanup_ms": 0.000584,
+              "execution_ms": 78.804875,
+              "logical_plan_ms": 0.177,
+              "optimize_ms": 0.302709,
+              "physical_plan_ms": 2.295709
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.83\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=375ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=750.00\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=43.16\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.39\u00b5s, expr_1_eval_time=6.51\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.26ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=231.38\u00b5s, aggregation_time=4.24ms, emitting_time=31.79\u00b5s, time_calculating_group_ids=33.70ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.13\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=17.75\u00b5s, time_elapsed_processing=15.45ms, time_elapsed_scanning_total=76.12ms, time_elapsed_scanning_until_data=10.23ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 110.483835,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.6275408770889,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.206208,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "ff0d51a5-064f-41fa-866b-d53b9d535f24",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 29392960,
+            "phases": {
+              "catalog_ms": 3.781041,
+              "cleanup_ms": 0.00125,
+              "execution_ms": 76.033667,
+              "logical_plan_ms": 0.314459,
+              "optimize_ms": 0.42604200000000003,
+              "physical_plan_ms": 2.461833
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.67\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=167ns, expr_1_eval_time=125ns, expr_2_eval_time=125ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=656.71\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.75\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.38\u00b5s, expr_1_eval_time=6.26\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=34.90ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=227.33\u00b5s, aggregation_time=3.50ms, emitting_time=34.21\u00b5s, time_calculating_group_ids=30.65ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.13\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=18.96\u00b5s, time_elapsed_processing=15.81ms, time_elapsed_scanning_total=74.96ms, time_elapsed_scanning_until_data=9.76ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 110.700417,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.94537519477308,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 85.146708,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "f4c3d76e-8801-494e-9c02-1c9765f4ac0a",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.795708,
+              "cleanup_ms": 0.000833,
+              "execution_ms": 78.007875,
+              "logical_plan_ms": 0.297,
+              "optimize_ms": 0.422458,
+              "physical_plan_ms": 2.421791
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.12\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=208ns, expr_1_eval_time=42ns, expr_2_eval_time=83ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=682.29\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=40.59\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=8.14\u00b5s, expr_1_eval_time=6.38\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=38.38ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=227.04\u00b5s, aggregation_time=5.31ms, emitting_time=31.54\u00b5s, time_calculating_group_ids=33.68ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.59\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.75\u00b5s, time_elapsed_processing=15.20ms, time_elapsed_scanning_total=75.21ms, time_elapsed_scanning_until_data=9.35ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 107.956749,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 85.39320807904005,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 82.603125,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "d2d76897-d547-42b2-be76-3ae12d3a9c27",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 4.178917,
+              "cleanup_ms": 0.0011250000000000001,
+              "execution_ms": 74.700541,
+              "logical_plan_ms": 0.20933400000000002,
+              "optimize_ms": 0.362708,
+              "physical_plan_ms": 2.9805
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=833ns, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=125ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=732.24\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=43.54\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.70\u00b5s, expr_1_eval_time=7.48\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=35.97ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=212.37\u00b5s, aggregation_time=5.97ms, emitting_time=32.46\u00b5s, time_calculating_group_ids=31.39ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.50\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=21.71\u00b5s, time_elapsed_processing=15.07ms, time_elapsed_scanning_total=71.84ms, time_elapsed_scanning_until_data=9.49ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 104.843627,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 84.16775008663535,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 79.74208300000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "4a2478f7-027d-42a7-a75f-723879841ee7",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 29392960,
+            "phases": {
+              "catalog_ms": 3.6858329999999997,
+              "cleanup_ms": 0.001583,
+              "execution_ms": 72.263084,
+              "logical_plan_ms": 0.253,
+              "optimize_ms": 0.360666,
+              "physical_plan_ms": 3.0199160000000003
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.25\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=166ns, expr_1_eval_time=167ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=614.62\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=40.24\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.44\u00b5s, expr_1_eval_time=6.47\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=33.64ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=202.04\u00b5s, aggregation_time=3.74ms, emitting_time=33.83\u00b5s, time_calculating_group_ids=30.84ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.04\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=18.71\u00b5s, time_elapsed_processing=15.64ms, time_elapsed_scanning_total=71.26ms, time_elapsed_scanning_until_data=9.65ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 105.12562600000001,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.58879087306559,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.853125,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "f0c234eb-cb8f-4584-98c3-15a12ac0ab97",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 3.246625,
+              "cleanup_ms": 0.0012079999999999999,
+              "execution_ms": 76.94654200000001,
+              "logical_plan_ms": 0.219667,
+              "optimize_ms": 0.35966699999999996,
+              "physical_plan_ms": 2.920083
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.92\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=708ns, expr_1_eval_time=125ns, expr_2_eval_time=42ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=670.00\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=51.51\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.11\u00b5s, expr_1_eval_time=5.99\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=36.27ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=396.25\u00b5s, aggregation_time=4.60ms, emitting_time=35.67\u00b5s, time_calculating_group_ids=31.04ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.96\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=17.33\u00b5s, time_elapsed_processing=14.83ms, time_elapsed_scanning_total=75.00ms, time_elapsed_scanning_until_data=9.61ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 109.94600200000001,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.10266610048711,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.409625,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "ec156d86-b342-4a78-aff4-62165cf011c7",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 2.707125,
+              "cleanup_ms": 0.00075,
+              "execution_ms": 77.068709,
+              "logical_plan_ms": 0.245541,
+              "optimize_ms": 0.358875,
+              "physical_plan_ms": 2.886917
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.50\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=333ns, expr_1_eval_time=42ns, expr_2_eval_time=167ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=766.91\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.24\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.09\u00b5s, expr_1_eval_time=6.43\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=36.73ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=224.95\u00b5s, aggregation_time=5.67ms, emitting_time=37.00\u00b5s, time_calculating_group_ids=31.29ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=7.88\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=22.50\u00b5s, time_elapsed_processing=15.31ms, time_elapsed_scanning_total=74.86ms, time_elapsed_scanning_until_data=9.49ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 108.632666,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.64337499067187,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.37212600000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "49ce4b78-34f6-4be5-86c6-13f2a5194f25",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 2.7062079999999997,
+              "cleanup_ms": 0.000541,
+              "execution_ms": 77.68625,
+              "logical_plan_ms": 0.292959,
+              "optimize_ms": 0.350625,
+              "physical_plan_ms": 2.142459
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=834ns, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=208ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=667.92\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.83\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.38\u00b5s, expr_1_eval_time=7.68\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=36.49ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=231.66\u00b5s, aggregation_time=6.27ms, emitting_time=35.71\u00b5s, time_calculating_group_ids=32.00ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.92\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=29.96\u00b5s, time_elapsed_processing=15.24ms, time_elapsed_scanning_total=74.83ms, time_elapsed_scanning_until_data=9.09ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 107.84296,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 86.13166701979935,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.30362500000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "2f1d41f8-9a71-4350-9101-96e9ab4effe1",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 2.8620419999999998,
+              "cleanup_ms": 0.0014160000000000002,
+              "execution_ms": 77.570209,
+              "logical_plan_ms": 0.16137500000000002,
+              "optimize_ms": 0.337833,
+              "physical_plan_ms": 2.1757500000000003
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=2.00\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=500ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=804.04\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.92\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=5.99\u00b5s, expr_1_eval_time=5.90\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=35.79ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=231.21\u00b5s, aggregation_time=5.44ms, emitting_time=34.96\u00b5s, time_calculating_group_ids=31.99ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=7.71\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=26.50\u00b5s, time_elapsed_processing=15.40ms, time_elapsed_scanning_total=74.63ms, time_elapsed_scanning_until_data=9.48ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 108.49929399999999,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 85.57875012047589,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 81.57029200000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "6667ffb5-f292-4b07-9165-0e48a3ef47e4",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 29392960,
+            "phases": {
+              "catalog_ms": 3.155458,
+              "cleanup_ms": 0.0015,
+              "execution_ms": 75.049083,
+              "logical_plan_ms": 0.274166,
+              "optimize_ms": 0.368084,
+              "physical_plan_ms": 2.5657089999999996
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.33\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=208ns, expr_1_eval_time=125ns, expr_2_eval_time=125ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=688.25\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.70\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.63\u00b5s, expr_1_eval_time=8.26\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=35.78ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=226.06\u00b5s, aggregation_time=4.45ms, emitting_time=38.29\u00b5s, time_calculating_group_ids=32.40ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.71\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.38\u00b5s, time_elapsed_processing=15.14ms, time_elapsed_scanning_total=73.52ms, time_elapsed_scanning_until_data=8.93ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 106.945627,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 85.75079217553139,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 83.44862499999999,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "01c98dd1-b246-4199-a7b8-95f65cd2ac3b",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.751417,
+              "cleanup_ms": 0.000583,
+              "execution_ms": 76.431083,
+              "logical_plan_ms": 0.17425000000000002,
+              "optimize_ms": 0.36812500000000004,
+              "physical_plan_ms": 2.583625
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.08\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=125ns, expr_1_eval_time=166ns, expr_2_eval_time=1ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=732.28\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=44.33\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.92\u00b5s, expr_1_eval_time=6.71\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=38.05ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=249.00\u00b5s, aggregation_time=6.26ms, emitting_time=32.75\u00b5s, time_calculating_group_ids=34.07ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=7.50\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=19.54\u00b5s, time_elapsed_processing=15.22ms, time_elapsed_scanning_total=73.96ms, time_elapsed_scanning_until_data=9.07ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 106.241332,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 83.74620787799358,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 81.421875,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "87444dd6-bb85-445a-9aa6-b4e1faa170dd",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.83125,
+              "cleanup_ms": 0.0006670000000000001,
+              "execution_ms": 73.50079199999999,
+              "logical_plan_ms": 0.22824999999999998,
+              "optimize_ms": 0.332792,
+              "physical_plan_ms": 3.346
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=833ns, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=167ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=806.28\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.63\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.56\u00b5s, expr_1_eval_time=5.89\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=34.60ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=214.38\u00b5s, aggregation_time=5.32ms, emitting_time=34.54\u00b5s, time_calculating_group_ids=30.38ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.09\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=35.58\u00b5s, time_elapsed_processing=15.11ms, time_elapsed_scanning_total=70.53ms, time_elapsed_scanning_until_data=8.16ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 103.908456,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 83.02174997515976,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 81.162125,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "83c281c4-632d-4ae7-8777-74df5713b86b",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 3.674625,
+              "cleanup_ms": 0.002125,
+              "execution_ms": 72.515125,
+              "logical_plan_ms": 0.230375,
+              "optimize_ms": 0.335042,
+              "physical_plan_ms": 3.375084
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.38\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=333ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=791.45\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.51\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.47\u00b5s, expr_1_eval_time=6.01\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=34.81ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=220.08\u00b5s, aggregation_time=5.34ms, emitting_time=34.25\u00b5s, time_calculating_group_ids=30.93ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.75\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=16.96\u00b5s, time_elapsed_processing=15.13ms, time_elapsed_scanning_total=70.52ms, time_elapsed_scanning_until_data=8.28ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 103.43545599999999,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 85.95983311533928,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 82.532708,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "3e6287f9-6a50-49c1-8b2e-66f0ee739b50",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.011625,
+              "cleanup_ms": 0.0006670000000000001,
+              "execution_ms": 76.943791,
+              "logical_plan_ms": 0.15187499999999998,
+              "optimize_ms": 0.280333,
+              "physical_plan_ms": 2.005291
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.25\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=250ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=653.46\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=43.61\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.24\u00b5s, expr_1_eval_time=6.60\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.11ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=231.58\u00b5s, aggregation_time=5.81ms, emitting_time=35.17\u00b5s, time_calculating_group_ids=30.88ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=7.84\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=22.67\u00b5s, time_elapsed_processing=15.26ms, time_elapsed_scanning_total=74.74ms, time_elapsed_scanning_until_data=9.41ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 107.34883500000001,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 85.32362501136959,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 82.58391700000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "ab45aefd-55b6-4301-bf4d-2f6bf035f42b",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 29392960,
+            "phases": {
+              "catalog_ms": 3.1085000000000003,
+              "cleanup_ms": 0.001042,
+              "execution_ms": 76.21870899999999,
+              "logical_plan_ms": 0.25145799999999996,
+              "optimize_ms": 0.362416,
+              "physical_plan_ms": 2.503875
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.21\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=167ns, expr_1_eval_time=42ns, expr_2_eval_time=41ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=666.96\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=39.96\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.16\u00b5s, expr_1_eval_time=6.88\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=38.04ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=239.10\u00b5s, aggregation_time=9.11ms, emitting_time=33.79\u00b5s, time_calculating_group_ids=32.24ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=8.25\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=15.96\u00b5s, time_elapsed_processing=14.80ms, time_elapsed_scanning_total=74.47ms, time_elapsed_scanning_until_data=9.23ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 106.375168,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 79.07999982126057,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 76.32166699999999,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "cd6b120b-aea9-421e-9ef5-c409c38c5c23",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 3.448875,
+              "cleanup_ms": 0.000542,
+              "execution_ms": 69.767666,
+              "logical_plan_ms": 0.26575,
+              "optimize_ms": 0.346167,
+              "physical_plan_ms": 2.2960409999999998
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.04\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=250ns, expr_1_eval_time=41ns, expr_2_eval_time=1ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=812.53\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=54.82\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.52\u00b5s, expr_1_eval_time=15.59\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=35.00ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=237.29\u00b5s, aggregation_time=4.58ms, emitting_time=32.83\u00b5s, time_calculating_group_ids=31.75ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=9.46\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=24.54\u00b5s, time_elapsed_processing=15.76ms, time_elapsed_scanning_total=67.66ms, time_elapsed_scanning_until_data=7.39ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 96.313959,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 78.65495793521404,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 76.623958,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "197fb851-a09e-4690-a2a7-99260d533777",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 3.870209,
+              "cleanup_ms": 0.002,
+              "execution_ms": 69.3085,
+              "logical_plan_ms": 0.21845799999999999,
+              "optimize_ms": 0.343875,
+              "physical_plan_ms": 2.333084
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.29\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=334ns, expr_1_eval_time=41ns, expr_2_eval_time=84ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=729.96\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.79\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.85\u00b5s, expr_1_eval_time=6.66\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=35.40ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=242.59\u00b5s, aggregation_time=5.42ms, emitting_time=36.83\u00b5s, time_calculating_group_ids=31.72ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=7.46\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=20.42\u00b5s, time_elapsed_processing=15.86ms, time_elapsed_scanning_total=67.60ms, time_elapsed_scanning_until_data=7.72ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 96.02045799999999,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        }
+      ],
+      "elapsed_secs": 0.8644457920454443,
+      "successful_queries": 20,
+      "successful_queries_per_second": 23.13621071909688
+    }
+  ],
+  "memory": [
+    {
+      "engine": "neura",
+      "workload": "local_high_cardinality",
+      "concurrency": 2,
+      "baseline": {
+        "time": 1790604627.155191,
+        "rss_bytes": 26177536,
+        "pss_bytes": 25763840,
+        "private_bytes": 25161728,
+        "sum_process_hwm_bytes": 26177536,
+        "processes": 1,
+        "smaps_readable": 1,
+        "cgroup_current_bytes": 8376320,
+        "cgroup_peak_bytes": 9179136
+      },
+      "query_start_time": 1790604627.16518,
+      "query_end_time": 1790604627.25407,
+      "checks": [
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 88.29445810988545,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 85.12141600000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "3df20319-f729-46da-bce2-32486bdd1c9e",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 64,
+            "phases": {
+              "catalog_ms": 4.606792,
+              "cleanup_ms": 0.001042,
+              "execution_ms": 76.41050000000001,
+              "logical_plan_ms": 0.5205000000000001,
+              "optimize_ms": 0.5354169999999999,
+              "physical_plan_ms": 2.8249999999999997
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=1.25\u00b5s, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=209ns, expr_1_eval_time=42ns, expr_2_eval_time=1ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=668.54\u00b5s, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=41.45\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=7.73\u00b5s, expr_1_eval_time=6.80\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.21ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=256.95\u00b5s, aggregation_time=5.32ms, emitting_time=40.08\u00b5s, time_calculating_group_ids=33.04ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=13.04\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=30.96\u00b5s, time_elapsed_processing=16.43ms, time_elapsed_scanning_total=73.84ms, time_elapsed_scanning_until_data=8.83ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 105.768916,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        },
+        {
+          "engine": "neura",
+          "workload": "local_high_cardinality",
+          "latency_ms": 88.05866702459753,
+          "correct": true,
+          "rows": [
+            [
+              "1000000",
+              "8999964",
+              "1000000"
+            ]
+          ],
+          "result_sha256": "140ff64c73a8fbcad8f748c27f2ae9eafd93c52077d96caff6c8b82fd3e531b8",
+          "diagnostic": {
+            "arrow_bytes": 312,
+            "elapsed_ms": 85.20679100000001,
+            "error": null,
+            "file_cache_resident_bytes": 0,
+            "id": "4534cd55-ca36-41d2-b1c9-96aa125da673",
+            "logical_plan": "Projection: count(Int64(1)) AS count(*) AS groups, sum(t.total) AS total, sum(t.n) AS rows\n  Aggregate: groupBy=[[]], aggr=[[count(Int64(1)), sum(t.total), sum(t.n)]]\n    SubqueryAlias: t\n      Projection: sum(local.orders.amount) AS total, count(Int64(1)) AS count(*) AS n\n        Aggregate: groupBy=[[local.orders.order_id]], aggr=[[sum(local.orders.amount), count(Int64(1))]]\n          TableScan: local.orders projection=[order_id, amount]",
+            "memory_pool_reserved_bytes": 0,
+            "phases": {
+              "catalog_ms": 4.5954999999999995,
+              "cleanup_ms": 0.000792,
+              "execution_ms": 76.499,
+              "logical_plan_ms": 0.523958,
+              "optimize_ms": 0.535667,
+              "physical_plan_ms": 2.882875
+            },
+            "physical_plan": "ProjectionExec: expr=[count(Int64(1))@0 as groups, sum(t.total)@1 as total, sum(t.n)@2 as rows], metrics=[output_rows=1, elapsed_compute=875ns, output_bytes=24.0 B, output_batches=1, expr_0_eval_time=166ns, expr_1_eval_time=41ns, expr_2_eval_time=1ns]\n  AggregateExec: mode=Single, gby=[], aggr=[count(Int64(1)), sum(t.total), sum(t.n)], metrics=[output_rows=1, elapsed_compute=1.57ms, output_bytes=24.0 B, output_batches=1]\n    ProjectionExec: expr=[sum(local.orders.amount)@1 as total, count(Int64(1))@2 as n], metrics=[output_rows=1.00 M, elapsed_compute=42.16\u00b5s, output_bytes=3.8 GB, output_batches=245, expr_0_eval_time=6.44\u00b5s, expr_1_eval_time=7.40\u00b5s]\n      AggregateExec: mode=Single, gby=[order_id@0 as order_id], aggr=[sum(local.orders.amount), count(Int64(1))], metrics=[output_rows=1.00 M, elapsed_compute=37.32ms, output_bytes=5.7 GB, output_batches=245, spill_count=0, spilled_bytes=0.0 B, spilled_rows=0, peak_mem_used=109.1 M, aggregate_arguments_time=251.59\u00b5s, aggregation_time=5.70ms, emitting_time=43.21\u00b5s, time_calculating_group_ids=33.03ms]\n        SourceScan: local, metrics=[]\n          DataSourceExec: file_groups={1 group: [[fixture/large-0.parquet, fixture/large-1.parquet]]}, projection=[order_id, amount], file_type=parquet, metrics=[output_rows=1.00 M, elapsed_compute=1ns, output_bytes=15.4 MB, output_batches=246, files_ranges_pruned_statistics=2 total \u2192 2 matched, row_groups_pruned_statistics=8 total \u2192 8 matched, row_groups_pruned_bloom_filter=8 total \u2192 8 matched, page_index_pages_pruned=0 total \u2192 0 matched, page_index_rows_pruned=0 total \u2192 0 matched, limit_pruned_row_groups=0 total \u2192 0 matched, batches_split=0, bytes_scanned=6.16 M, file_open_errors=0, file_scan_errors=0, num_predicate_creation_errors=0, predicate_evaluation_errors=0, pushdown_rows_matched=0, pushdown_rows_pruned=0, predicate_cache_inner_records=0, predicate_cache_records=0, bloom_filter_eval_time=4ns, metadata_load_time=13.04\u00b5s, page_index_eval_time=4ns, row_pushdown_eval_time=4ns, statistics_eval_time=4ns, time_elapsed_opening=30.88\u00b5s, time_elapsed_processing=16.15ms, time_elapsed_scanning_total=73.70ms, time_elapsed_scanning_until_data=9.07ms, scan_efficiency_ratio=200% (6.16 M/3.11 M)]\n",
+            "rows": 1,
+            "sources": {
+              "local": {
+                "arrow_bytes": 16169088,
+                "cache_bytes": 0,
+                "cache_evictions": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "elapsed_ms": 105.70474899999999,
+                "read_ahead_bytes": 0,
+                "read_ahead_hits": 0,
+                "remote_bytes_processed": null,
+                "requests": 16,
+                "response_bytes": 7273422,
+                "rows": 1000000
+              }
+            },
+            "sql_sha256": "04f108ba25385a61e1b37b7edb92956011014532922f47ce96a8d435090c2702",
+            "status": "succeeded"
+          }
+        }
+      ],
+      "observations": [
+        {
+          "time": 1790604627.155191,
+          "rss_bytes": 26177536,
+          "pss_bytes": 25763840,
+          "private_bytes": 25161728,
+          "sum_process_hwm_bytes": 26177536,
+          "processes": 1,
+          "smaps_readable": 1,
+          "cgroup_current_bytes": 8376320,
+          "cgroup_peak_bytes": 9179136
+        },
+        {
+          "time": 1790604627.207016,
+          "rss_bytes": 126902272,
+          "pss_bytes": 127750144,
+          "private_bytes": 127148032,
+          "sum_process_hwm_bytes": 126902272,
+          "processes": 1,
+          "smaps_readable": 1,
+          "cgroup_current_bytes": 71213056,
+          "cgroup_peak_bytes": 71213056
+        },
+        {
+          "time": 1790604627.25794,
+          "rss_bytes": 71249920,
+          "pss_bytes": 70938624,
+          "private_bytes": 70336512,
+          "sum_process_hwm_bytes": 250335232,
+          "processes": 1,
+          "smaps_readable": 1,
+          "cgroup_current_bytes": 12423168,
+          "cgroup_peak_bytes": 193761280
+        },
+        {
+          "time": 1790604627.311554,
+          "rss_bytes": 71249920,
+          "pss_bytes": 70938624,
+          "private_bytes": 70336512,
+          "sum_process_hwm_bytes": 250335232,
+          "processes": 1,
+          "smaps_readable": 1,
+          "cgroup_current_bytes": 11984896,
+          "cgroup_peak_bytes": 193761280
+        },
+        {
+          "time": 1790604627.363251,
+          "rss_bytes": 71249920,
+          "pss_bytes": 70938624,
+          "private_bytes": 70336512,
+          "sum_process_hwm_bytes": 250335232,
+          "processes": 1,
+          "smaps_readable": 1,
+          "cgroup_current_bytes": 11767808,
+          "cgroup_peak_bytes": 193761280
+        }
+      ],
+      "peaks": {
+        "rss_bytes": 126902272,
+        "pss_bytes": 127750144,
+        "private_bytes": 127148032,
+        "sum_process_hwm_bytes": 250335232,
+        "cgroup_current_bytes": 71213056,
+        "cgroup_peak_bytes": 193761280
+      }
+    }
+  ],
+  "governance": [
+    {
+      "engine": "neura",
+      "rls_passed": true,
+      "denied_table_passed": true,
+      "denied_table_error": "Execution error: PostgreSQL stream failed; inspect source logs",
+      "source_log_evidence": [
+        "2026-09-28 14:10:24.648 UTC [60330] ERROR:  permission denied for table forbidden",
+        "2026-09-28 14:10:24.648 UTC [60330] ERROR:  permission denied for table forbidden"
+      ]
+    }
+  ],
+  "startup": [
+    {
+      "engine": "neura",
+      "phase": "governance",
+      "workload": null,
+      "startup_ms": 129.71708294935524
+    },
+    {
+      "engine": "neura",
+      "phase": "latency",
+      "workload": "local_high_cardinality",
+      "startup_ms": 110.88304198347032
+    },
+    {
+      "engine": "neura",
+      "phase": "throughput",
+      "workload": "local_high_cardinality",
+      "startup_ms": 100.46687512658536
+    },
+    {
+      "engine": "neura",
+      "phase": "memory",
+      "workload": "local_high_cardinality",
+      "startup_ms": 101.99649981223047
+    }
+  ],
+  "errors": [],
+  "host": {
+    "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64"
+  },
+  "docker": {
+    "ServerVersion": "28.4.0",
+    "KernelVersion": "6.10.14-linuxkit",
+    "OperatingSystem": "Docker Desktop",
+    "Architecture": "aarch64",
+    "NCPU": 12,
+    "MemTotal": 16485011456
+  },
+  "source_sha256": {
+    "src/api.rs": "9e9100f7c521dc8791408604c9eb84bd97c4505adac7bd028c16f8e79361ac6f",
+    "src/arrow_util.rs": "0cc74611683d11d3e6b947eb96d3e5d3f5715a87e17d54fc4eba4edcfe881ce3",
+    "src/config.rs": "d631ed0b084a5a5860c227c98d4b0e662212c29c2a08f39a7a90ca877cc8daff",
+    "src/connectors/arrow_stream.rs": "fbde30d6d8f1f4371283cd56687554c886396096d1c4e986c66923c4ec26df2d",
+    "src/connectors/cache.rs": "b699050c3815213112e3c72882f941c71121e0e7169793ac826320bf0ef68fb2",
+    "src/connectors/clickhouse.rs": "ec8a07e7161457f223d7c5a608061f432decc9c8ccb489375f2a06cece5e3d81",
+    "src/connectors/files/read_ahead.rs": "30edf58532298ed4786dbd918e1e45b3403b56dd2cf046abd2550e1c9ed92c77",
+    "src/connectors/files.rs": "0c0a9333481f2de1ff1d9c942f98978a1a8789175da22f090d08b85e9ebb5c5d",
+    "src/connectors/instrument.rs": "8074a87c4101d94677244ab54c0bd685092e785d641313efc7bfa95713c1f52a",
+    "src/connectors/mod.rs": "e6e1ae1a64e649eb4a9ea17494e810608c031f0480236665fe7294c27d1f65c7",
+    "src/connectors/postgres.rs": "16bcd05baa079065e94290ad1b2b6a2f6993bf597a54645c333a4f378b5fa5ba",
+    "src/connectors/warehouse.rs": "0ed997de78ab6688694931ae8217be0d3e4404838a72a0eda5a7ecfe521699b0",
+    "src/engine.rs": "6866f2ff5d797ee665a9a25b0b28513fbcd6da17e73f1b8632f5d38be21d7f8c",
+    "src/lib.rs": "dae6fefaf41996e344f24da6bba0843bf39a809868b716aff94441f7bb7413b7",
+    "src/main.rs": "ccc8ab22455fa9c8df4dc777f4d5837a9634a6b089ef5e7f4239a94779c19825",
+    "src/metrics.rs": "19b51e79f0688eb8e48e0dbb958c72c650149cb2005df6c34d4cc763a81e3323",
+    "src/pgwire.rs": "d1cebce5af980ed2e5c7fa704f4952fe55168ef39ee234d4e9e5d0b61105e97f",
+    "src/security.rs": "7649357bc057bc7bcc9fe36b111ec01b2ae290436833452fbeb2bb4f609d6531",
+    "Cargo.toml": "1d0709dcd4be4bb26d1e80fc4bf7e0cfeaa14ffcd630202456917e050ac6e8c0",
+    "Cargo.lock": "d7d8352c6a2a2f3ffc0b812688358a34a1bf9b6137f4ed20a2b0aeee774c1a32"
+  },
+  "harness_sha256": {
+    "benchmarks/compare.py": "39ff11a590c3e1d82b77bc994f4bc37e100b4836014d25f282b19c77b0538355",
+    "benchmarks/compare_fixture.py": "3b774ad303b9aede459616464489922139dd581455b43ce82f4a1eab9c12e66c",
+    "benchmarks/compare_server.py": "1881afcee7e4bcd6b5894881a30f85fae8f7a1c608ebf08c24c3d12665635cb2",
+    "benchmarks/memmon.c": "8e52db80720761b0158f620b9aea2a5f6d0be36a09caf0206f70a775dc6dbe2c",
+    "benchmarks/prepare_compare.py": "dbfdeeae885702facad15769a9266a65c9af14323e44646d7780dffad9db93fd",
+    "benchmarks/workloads/compare.json": "ef436e0668802215fabfe71fc560c8d7cc9c2d5e348bca7ba40f1413d596274e"
+  },
+  "notes": [
+    "2 CPU, 2 GiB cgroup RAM, no extra swap; 512 MiB internal budgets have different accounting.",
+    "Cold is process-cold after readiness, excluding startup; source/OS/storage caches retained.",
+    "Spark and DuckDB discover schemas during startup; Neura does so during queries.",
+    "Authenticated HTTP end-to-end full-fetch latency; Neura NDJSON, other adapters JSON; adapters differ.",
+    "No explicit SQL result/table caches; Neura file-cache limits and DuckDB file-cache settings are recorded. Connection/metadata/OS caches remain.",
+    "Engines execute sequentially; their order rotates per workload. Shared host is not exclusive.",
+    "Memory measured separately from latency at roughly 50ms intervals; short-lived peaks may be missed.",
+    "RSS sums may double-count shared pages; PSS apportions them. Sum of process HWM is not a simultaneous peak.",
+    "Cgroup peak includes startup, page cache and the small monitor process; shared pages may be charged elsewhere.",
+    "Fixture remains static. Permission probes do not certify equivalent concurrent-mutation snapshot semantics."
+  ],
+  "source_containers": {
+    "neura-test-postgres-1": {
+      "image": "postgres:17.6",
+      "image_id": "sha256:fd0bfa08287c27c8dc5187c93e041d60e6dac623a65117d3ac7f7e7988e01608",
+      "cpu_limit": 1.0,
+      "memory_limit_bytes": 536870912,
+      "restart_count_at_start": 0
+    },
+    "neura-test-s3-1": {
+      "image": "chrislusf/seaweedfs:3.94",
+      "image_id": "sha256:b93e62044b2f02d9f6b9e75bce4ccdedbdb7a77de8f8252090ecf5ef048a4e70",
+      "cpu_limit": 1.0,
+      "memory_limit_bytes": 536870912,
+      "restart_count_at_start": 0
+    }
+  },
+  "duckdb_extension_sha256": {
+    "v1.5.5/linux_arm64/postgres_scanner.duckdb_extension": "e2469cce1e855e8c842a1487dd8168cf27904c03baaf1f2c227529403315d819",
+    "v1.5.5/linux_arm64/httpfs.duckdb_extension": "eba6e263e395a83966090f1f11ade63630b1b21422f0f2813858d179d42ea1e9"
+  },
+  "finished_at": "2026-09-28T14:10:27.531609+00:00"
+}

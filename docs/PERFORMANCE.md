@@ -89,9 +89,10 @@ configured width. Set the option to false for fixed per-query parallelism.
 
 This reduces aggregate/repartition consumers competing for DataFusion's fair-share
 spill allowance. In the control workload, reducing partition count avoided
-unnecessary spills and improved concurrent throughput at a lower resident-memory
-peak, but slowed an isolated query. Admission-aware selection addresses that
-tradeoff; it is a heuristic, not a strict global thread budget. Early arrivals
+unnecessary spills and improved concurrent throughput, but slowed an isolated
+query. Sampled RSS fell while the recorded process high-water mark increased;
+this does not establish a peak-memory reduction. Admission-aware selection addresses
+the latency tradeoff; it is a heuristic, not a strict global thread budget. Early arrivals
 can retain wider plans, waiting or backpressured queries still count, and more
 admitted queries than CPUs can still oversubscribe the machine. Validate it with
 the deployment's mix of scans, remote I/O and local operators.
@@ -114,3 +115,10 @@ correctness checks, separate process-cold/warm samples, concurrency tests and an
 independent memory pass. See [benchmark instructions](../benchmarks/COMPARE.md)
 and the raw result files linked from each report. True storage-cold behavior,
 large changing datasets and cloud credentials remain separate validation work.
+
+The [measured optimization results](benchmark-results/2026-09-28-optimizations.md)
+include both cache profiles and all tuning controls. The default profile improved
+local concurrent throughput from 9.7 to 22.3 queries/s and eliminated observed
+spills in that batch, but recorded local high-water RSS increased from 208 to
+237 MiB. File caching reduced origin body bytes without a consistent latency
+benefit. Neither result establishes a universal speed or memory improvement.

@@ -5,6 +5,11 @@ row-group layouts, concurrent queries and sampled RSS/PSS, use [COMPARE.md](COMP
 Its [published measurements](../docs/benchmark-results/2026-09-28-spark-duckdb.md)
 supplement the historical QE/Spark baseline below.
 
+The [revised Neura measurements](../docs/benchmark-results/2026-09-28-optimizations.md)
+include bounded read-ahead, PostgreSQL pooling, admission-aware partitions and
+separate cache-off/cache-on profiles. Both final profiles and the intermediate
+tuning controls retain raw correctness, timing and memory observations.
+
 The baseline uses Datatailr QE `0.1.0-pre300-arm64`, Spark 3.5.6 and this Neura checkout. QE was identified from the locally available image; the user's meaning of “QE” has not been independently confirmed. An accessible QE image is required; no substitute is silently used. The provided comparison setup targets arm64. For other architectures, pin corresponding QE/JRE images and record that change as a separate experiment.
 
 Prerequisites: Docker, Rust 1.98.1, Python 3, `uv`, and approximately 20 GB of free build space. Docker needs enough RAM to run the three 2 GiB engine containers and two 512 MiB sources. ClickHouse adds a 1 GiB fixture only for connector tests and is not part of the published comparison. Build the toolchain image first if using the standard Docker build instead of the low-disk path below.

@@ -1,0 +1,9 @@
+{
+  "demo_paused_at": "2026-09-28T14:06:46.720851+00:00",
+  "active_demo_queries_before_pause": 0,
+  "demo_restored_at": "2026-09-28T14:23:20.439214+00:00",
+  "demo_health": {
+    "status": "ok",
+    "version": "0.1.0"
+  }
+}

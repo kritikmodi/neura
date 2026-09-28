@@ -28,3 +28,13 @@ and the recorded process high-water marks can exceed sampled peaks. Spark 3.5.6
 was used, not the latest Spark release. The S3-compatible source itself reached
 its CPU cap in an observed throughput interval. Static-fixture permission checks
 do not establish equivalent cache invalidation or concurrent-write snapshots.
+
+The [subsequent optimizations](benchmark-results/2026-09-28-optimizations.md)
+reduced small-row-group request overhead and improved concurrent throughput.
+They did **not** establish lower peak memory: default local aggregation high-water
+RSS increased from 208 to 237 MiB despite lower sampled RSS. Admission-aware
+partitions are a heuristic; running plans keep their original width, and waiting
+queries count toward the selection. It is not a global CPU or memory scheduler.
+The optional cache reduced body bytes but did not consistently improve latency.
+Read-ahead increased origin bytes on the measured full join while reducing
+requests; cloud request/egress cost remains unmeasured.
