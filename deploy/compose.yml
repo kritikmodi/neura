@@ -1,0 +1,17 @@
+name: neura
+services:
+  neura:
+    build: ..
+    image: neura:0.1.0
+    ports: ["127.0.0.1:8080:8080", "127.0.0.1:5433:5433"]
+    read_only: true
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2
+    tmpfs: ["/tmp:size=64m,mode=1777", "/var/lib/neura/spill:size=512m,uid=10001,gid=10001,mode=0700"]
+    volumes: ["${NEURA_CONFIG:?Set NEURA_CONFIG to your config file}:/etc/neura/neura.toml:ro"]
+    env_file: ["${NEURA_ENV_FILE:?Set NEURA_ENV_FILE to a protected environment file}"]
+    restart: unless-stopped

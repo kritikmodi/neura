@@ -1,0 +1,16 @@
+# Works without source credentials: neura -c examples/empty.toml query 'SELECT 1'
+[limits]
+memory_mb = 512
+max_concurrent_queries = 4
+max_connections = 64
+query_timeout_secs = 120
+batch_rows = 4096
+partitions = 4
+max_spill_mb = 4096
+spill_dir = "/tmp/neura-spill"
+[server]
+http_addr = "127.0.0.1:8080"
+pg_addr = "127.0.0.1:5433"
+token_env = "NEURA_API_TOKEN"
+pg_user = "neura"
+pg_password_env = "NEURA_PG_PASSWORD"

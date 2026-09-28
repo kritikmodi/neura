@@ -1,0 +1,45 @@
+{
+  "identities": [
+    {
+      "name": "fixture-admin",
+      "credentials": [
+        {
+          "accessKey": "neura-test",
+          "secretKey": "neura-test-storage-only"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ],
+      "account": {
+        "id": "neura-test-account"
+      }
+    },
+    {
+      "name": "neura-reader",
+      "credentials": [
+        {
+          "accessKey": "neura-reader",
+          "secretKey": "neura-test-readonly-storage"
+        }
+      ],
+      "actions": [
+        "Read:neura-fixture",
+        "List:neura-fixture"
+      ],
+      "account": {
+        "id": "neura-test-account"
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "id": "neura-test-account",
+      "displayName": "Neura test account"
+    }
+  ]
+}

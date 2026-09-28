@@ -1,0 +1,22 @@
+name: neura-test
+services:
+  postgres:
+    image: postgres:17.6
+    environment:
+      POSTGRES_PASSWORD: neura-test-admin-only
+      POSTGRES_DB: neura
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro", "../data/postgres:/var/lib/postgresql/data"]
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d neura"]
+      interval: 2s
+      retries: 30
+  s3:
+    image: chrislusf/seaweedfs:3.94
+    command: server -s3 -s3.port=8333 -s3.config=/etc/neura-s3.json -ip=s3 -ip.bind=0.0.0.0 -dir=/data -volume.max=20 -master.volumeSizeLimitMB=64 -master.volumePreallocate=false -volume.minFreeSpace=10MiB
+    ports: ["127.0.0.1:59000:8333"]
+    volumes: ["./s3.test.json:/etc/neura-s3.json:ro", "../data/s3:/data"]
+    mem_limit: 512m
+    cpus: 1

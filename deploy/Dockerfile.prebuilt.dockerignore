@@ -1,0 +1,5 @@
+**
+!target/
+!target/linux-build/
+!target/linux-build/release/
+!target/linux-build/release/neura

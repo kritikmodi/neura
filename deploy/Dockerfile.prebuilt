@@ -1,0 +1,12 @@
+# Alternative runtime packaging after scripts/build-low-disk.sh compiles inside Linux.
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 neura && useradd --uid 10001 --gid 10001 --no-create-home neura \
+    && mkdir -p /var/lib/neura/spill && chown -R neura:neura /var/lib/neura
+COPY target/linux-build/release/neura /usr/local/bin/neura
+USER 10001:10001
+WORKDIR /var/lib/neura
+EXPOSE 8080 5433
+ENTRYPOINT ["neura"]
+STOPSIGNAL SIGINT
+CMD ["--config","/etc/neura/neura.toml","serve"]

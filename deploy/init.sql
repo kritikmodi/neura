@@ -1,0 +1,11 @@
+CREATE ROLE neura_reader LOGIN PASSWORD 'neura-test-reader-only' NOSUPERUSER NOBYPASSRLS;
+GRANT CONNECT ON DATABASE neura TO neura_reader;
+GRANT USAGE ON SCHEMA public TO neura_reader;
+CREATE TABLE customers (id bigint PRIMARY KEY, region text NOT NULL, tenant_id bigint NOT NULL);
+INSERT INTO customers SELECT i, CASE WHEN i % 2=0 THEN 'east' ELSE 'west' END, CASE WHEN i<=100 THEN 1 ELSE 2 END FROM generate_series(1,200) AS i;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_one ON customers FOR SELECT TO neura_reader USING (tenant_id=1);
+GRANT SELECT ON customers TO neura_reader;
+CREATE TABLE forbidden (secret text);
+INSERT INTO forbidden VALUES ('must never be returned');
+ANALYZE customers;

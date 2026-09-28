@@ -1,0 +1,5 @@
+# For the low-Docker-disk setup, Spark/JRE are mounted from target/ rather than copied.
+FROM neura-build:1.98.1
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/runtime/java PYTHONPATH=/runtime/python SPARK_HOME=/runtime/python/pyspark PYSPARK_PYTHON=python3
+ENTRYPOINT ["python3","/bench/spark_server.py"]
