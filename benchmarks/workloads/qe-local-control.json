@@ -1,0 +1,8 @@
+[
+  {
+    "name": "local_distinct_control",
+    "oracle": "local_high_cardinality",
+    "sql": "SELECT COUNT(DISTINCT order_id) AS groups, SUM(amount) AS total, COUNT(*) AS rows FROM local.orders",
+    "purpose": "Diagnostic alternative to the grouped subquery. Equivalent checked scalar results for this fixture's non-null order IDs; a different operator shape, measured for every engine without replacing the original workload."
+  }
+]

@@ -35,13 +35,17 @@ int main(int argc, char **argv) {
             snprintf(path, sizeof(path), "/proc/%ld/status", pid);
             FILE *f = fopen(path, "r");
             if (!f) continue;
-            processes++;
+            int resident_status = 0;
             while (fgets(line, sizeof(line), f)) {
                 long long n;
-                if (sscanf(line, "VmRSS: %lld kB", &n) == 1) rss += n * 1024;
+                if (sscanf(line, "VmRSS: %lld kB", &n) == 1) { rss += n * 1024; resident_status = 1; }
                 if (sscanf(line, "VmHWM: %lld kB", &n) == 1) hwm += n * 1024;
             }
             fclose(f);
+            /* Zombies have no resident address space or smaps. Do not mistake
+             * an exiting process for a PSS permission failure. */
+            if (!resident_status) continue;
+            processes++;
             snprintf(path, sizeof(path), "/proc/%ld/smaps_rollup", pid);
             f = fopen(path, "r");
             if (!f) continue;

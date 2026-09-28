@@ -122,3 +122,14 @@ local concurrent throughput from 9.7 to 22.3 queries/s and eliminated observed
 spills in that batch, but recorded local high-water RSS increased from 208 to
 237 MiB. File caching reduced origin body bytes without a consistent latency
 benefit. Neither result establishes a universal speed or memory improvement.
+
+The subsequent [same-host Hetzner comparison](benchmark-results/2026-09-28-hetzner-qe.md)
+shows a different balance against Query Engine: QE wins the six measured S3
+workloads, while Neura wins warm PostgreSQL aggregation and the local distinct
+control, with lower recorded high-water RSS in successful shared memory cases.
+The full small-group join is 1,778 ms in Neura versus 308 ms in QE pre305. Neura
+still makes 21 instrumented S3 requests and transfers about 8.1 MB of origin body
+data for that join. Fewer requests alone do not ensure a faster reader on another
+host/source setup. These x86_64 observations must not be mixed with the earlier
+laptop timings. This comparison changes the harness and fixture controls only;
+Neura's engine implementation remains the measured `5bcc99c` source.

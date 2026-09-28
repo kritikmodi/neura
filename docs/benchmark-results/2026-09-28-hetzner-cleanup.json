@@ -1,0 +1,66 @@
+{
+  "at": "2026-09-28T16:01:22.028511+00:00",
+  "existing_services_unchanged": true,
+  "existing_service_count": 19,
+  "benchmark_engines_stopped": {
+    "qe305": true,
+    "qe341": true,
+    "neura": true
+  },
+  "sources_before_stop": {
+    "neura-hz-20260928-postgres": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 1762966,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-28T15:25:29.53616076Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "neura-hz-20260928-s3": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 1828743,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-28T15:51:04.526896991Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "sources_after_stop": {
+    "neura-hz-20260928-postgres": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-28T15:25:29.53616076Z",
+      "FinishedAt": "2026-09-28T16:01:22.890286548Z"
+    },
+    "neura-hz-20260928-s3": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-28T15:51:04.526896991Z",
+      "FinishedAt": "2026-09-28T16:01:33.243007044Z"
+    }
+  }
+}

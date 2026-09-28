@@ -97,7 +97,16 @@ origin payload bytes but did not consistently reduce latency; it stays off by
 default. Earlier engine observations are historical references, not simultaneous
 reruns. Raw results, tuning controls and limitations are included in the report.
 
-The comparisons below describe the engine before those changes.
+The [same-host Hetzner QE comparison](docs/benchmark-results/2026-09-28-hetzner-qe.md)
+used the optimized engine and the actual running QE pre305 image, plus installed
+pre341, with equal 2 CPU / 2 GiB engine limits. QE won all six S3 workloads;
+Neura won warm PostgreSQL aggregation and the local distinct-count control and
+used less recorded resident memory in the successful comparisons. Neura passed
+213/213 checks. QE's grouped-subquery memory rejections and pre305's concurrent
+local-control OOM are retained. This is a different host/architecture from the
+laptop comparison; the timings must not be mixed.
+
+The comparisons below describe the engine before the optimizations.
 
 The [Neura / Spark / DuckDB comparison](docs/benchmark-results/2026-09-28-spark-duckdb.md) passed **472/472** result checks across its baseline and separate DuckDB default-file-cache profile. With identical 2 CPU / 2 GiB engine limits, Neura's local million-group aggregate was 57.7 ms warm versus DuckDB's 59.7 ms and Spark's 403.4 ms. Neura's S3 join was 15.9 s with small row groups and 260 ms with larger groups; source requests fell from 987 to 17. DuckDB's default file cache reduced its warm join to 19.1 ms on this small static fixture. Neura had lower observed resident memory in the measured cases, but is not the fastest engine overall. [Reproduce the suite](benchmarks/COMPARE.md); cold/warm definitions, raw samples, source-resource constraints and memory caveats are included.
 

@@ -2,6 +2,45 @@
 
 Validation performed on 2026-09-28 in the separate `/Users/kritikmodi/Neura` repository. CompanyBrain was not read or modified. Local host: Apple Silicon, macOS, 36 GiB physical RAM; Linux arm64 containers run under Docker Desktop. Rust 1.98.1, DataFusion 53.1.0, Arrow 58.4.0, Iceberg Rust 0.10.1. Dependency versions are locked in `Cargo.lock`.
 
+## Hetzner Query Engine benchmark
+
+The [same-host comparison](benchmark-results/2026-09-28-hetzner-qe.md) ran on the
+user's AMD EPYC-Genoa x86_64 machine using a native Neura release build from
+`5bcc99c`, an exact copy of the running QE pre305 image, and the newer installed
+pre341 image. The Rust source was unchanged. All engines had 2 CPU / 2 GiB hard
+limits, no extra swap and a 512 MiB shared pool; QE also retained its separate
+default 1 GiB per-query estimate guard.
+
+- **Neura: 213/213** checks passed.
+- **QE pre305: 164/176** checks passed. Five grouped-subquery attempts hit its
+  memory guard. Seven requests failed in the 30-request concurrent distinct-count
+  batch; Docker recorded `OOMKilled=true`, exit 137.
+- **QE pre341: 171/176** checks passed. Its five failures were the grouped-subquery
+  memory guard. It completed all 30 concurrent distinct-count requests.
+- All three engines passed live PostgreSQL RLS and forbidden-table probes with
+  source denial logs. There were no mismatched returned results; the 17 failed
+  checks were execution errors. The final harness recorded no infrastructure errors.
+- Seven warm observations, separate process-cold observations, four concurrency
+  workloads and twelve separate memory passes were retained. Failed queries are
+  excluded from successful-query speed/memory comparisons. PSS access was complete
+  in all twelve final memory passes.
+- The native observer compiled with warnings as errors. Python syntax checks,
+  source/harness hash verification and chart rendering/visual inspection passed.
+
+An earlier run was invalidated when the dedicated S3 fixture was OOM-killed at
+512 MiB. That run is retained separately. The final common S3 source used 1 CPU /
+1 GiB and a 512 MiB Go soft limit; PostgreSQL used 1 CPU / 512 MiB. Object hashes
+were checked again after recovery. The observer was corrected to exclude zombies
+without resident address spaces and to mark incomplete PSS instead of reporting
+it as zero or aborting unrelated measurements.
+
+All nineteen pre-existing services retained their image IDs, process IDs, start
+times and restart counts. The three dedicated engine copies and both fixture
+containers were stopped afterward. Protected credentials and unrelated service
+names were excluded from published results. This synthetic, static comparison
+does not certify cloud access or equivalent concurrent-update snapshot semantics.
+Its x86_64 timings must not be mixed with earlier laptop Spark/DuckDB measurements.
+
 ## Optimization validation
 
 The final optimization implementation is source commit `bf18760`. Its release

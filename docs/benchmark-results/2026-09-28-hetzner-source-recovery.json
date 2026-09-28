@@ -1,0 +1,44 @@
+{
+  "reason": "Initial timing run invalidated by S3 source OOM; engine limits unchanged",
+  "before": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": true,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 137,
+    "Error": "",
+    "StartedAt": "2026-09-28T15:25:32.714282078Z",
+    "FinishedAt": "2026-09-28T15:41:29.023780615Z"
+  },
+  "old_memory_limit_bytes": 536870912,
+  "new_memory_limit_bytes": 1073741824,
+  "go_memory_limit": "512MiB",
+  "image_id": "sha256:d8ab8284bf4fd221e3cbf25f114f2f317c5bc942b1df032c43cc9d7bfe9bb1c6",
+  "started_at": "2026-09-28T15:51:04.240427+00:00",
+  "verified_objects": [
+    {
+      "path": "orders/part-0.parquet",
+      "sha256": "c9cceb7da156351ba8d3c8e97f6e5f37b4d243e26c57d495a3cd377253507660",
+      "etag": "\"f5ab4e809a866bf28f918acc80b43076\""
+    },
+    {
+      "path": "orders/part-1.parquet",
+      "sha256": "71b249512a56424a481dc22a35948e81542ebd1473f77cc6ab037284cc0b9a2a",
+      "etag": "\"ee302c423d7e63166e9b113395a358b7\""
+    },
+    {
+      "path": "orders_coarse/part-0.parquet",
+      "sha256": "3edbf1b93dfc4b686f39fd9690a3c14afed5d4515e9700c46cca1f423939221b",
+      "etag": "\"eee6fbf37f880538868018d58bfcd6d7\""
+    },
+    {
+      "path": "orders_coarse/part-1.parquet",
+      "sha256": "5d4606a8b7b4472438b251322ada2a60f3f3bd22a88b650ac6054f979e57dcbc",
+      "etag": "\"a77e9d533b5321eb2ded1d1d1e131150\""
+    }
+  ],
+  "finished_at": "2026-09-28T15:51:31.897917+00:00"
+}

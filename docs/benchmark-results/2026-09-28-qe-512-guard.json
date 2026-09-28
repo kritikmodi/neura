@@ -1,0 +1,1110 @@
+{
+  "started_at": "2026-09-28T15:33:17.536406+00:00",
+  "fixture": {
+    "rows": 1000000,
+    "small": [
+      {
+        "path": "orders/part-0.parquet",
+        "etag": "\"f5ab4e809a866bf28f918acc80b43076\"",
+        "bytes": 3569066,
+        "sha256": "c9cceb7da156351ba8d3c8e97f6e5f37b4d243e26c57d495a3cd377253507660",
+        "row_groups": 489
+      },
+      {
+        "path": "orders/part-1.parquet",
+        "etag": "\"ee302c423d7e63166e9b113395a358b7\"",
+        "bytes": 3569633,
+        "sha256": "71b249512a56424a481dc22a35948e81542ebd1473f77cc6ab037284cc0b9a2a",
+        "row_groups": 489
+      }
+    ],
+    "large": [
+      {
+        "path": "orders_coarse/part-0.parquet",
+        "etag": "\"eee6fbf37f880538868018d58bfcd6d7\"",
+        "bytes": 3114330,
+        "sha256": "3edbf1b93dfc4b686f39fd9690a3c14afed5d4515e9700c46cca1f423939221b",
+        "row_groups": 4
+      },
+      {
+        "path": "orders_coarse/part-1.parquet",
+        "etag": "\"a77e9d533b5321eb2ded1d1d1e131150\"",
+        "bytes": 3114424,
+        "sha256": "5d4606a8b7b4472438b251322ada2a60f3f3bd22a88b650ac6054f979e57dcbc",
+        "row_groups": 4
+      }
+    ]
+  },
+  "host": {
+    "platform": "Linux-6.8.0-107-generic-x86_64-with-glibc2.39",
+    "cpu_count": 16,
+    "cpu_model": "AMD EPYC-Genoa Processor",
+    "mem_total_kib": "MemTotal:       32083580 kB",
+    "load_at_start": [
+      3.4580078125,
+      3.1083984375,
+      1.9423828125
+    ],
+    "load_at_end": [
+      3.50146484375,
+      3.12353515625,
+      1.95361328125
+    ]
+  },
+  "source_commit": "5bcc99c820e614532defb4bfec13117f1c97b14f",
+  "source_sha256": {
+    "src/api.rs": "9e9100f7c521dc8791408604c9eb84bd97c4505adac7bd028c16f8e79361ac6f",
+    "src/arrow_util.rs": "0cc74611683d11d3e6b947eb96d3e5d3f5715a87e17d54fc4eba4edcfe881ce3",
+    "src/config.rs": "37127131b15a9ce2d17bb8a01c6194f5d92bbf303314b7e29e9e0ccf3098e096",
+    "src/connectors/arrow_stream.rs": "fbde30d6d8f1f4371283cd56687554c886396096d1c4e986c66923c4ec26df2d",
+    "src/connectors/cache.rs": "b699050c3815213112e3c72882f941c71121e0e7169793ac826320bf0ef68fb2",
+    "src/connectors/clickhouse.rs": "ec8a07e7161457f223d7c5a608061f432decc9c8ccb489375f2a06cece5e3d81",
+    "src/connectors/files/read_ahead.rs": "4dc49e5d589f87c2a0e54e37de327e6d24a45f65d59c666dcff1caef43d43e22",
+    "src/connectors/files.rs": "0c0a9333481f2de1ff1d9c942f98978a1a8789175da22f090d08b85e9ebb5c5d",
+    "src/connectors/instrument.rs": "8074a87c4101d94677244ab54c0bd685092e785d641313efc7bfa95713c1f52a",
+    "src/connectors/mod.rs": "e6e1ae1a64e649eb4a9ea17494e810608c031f0480236665fe7294c27d1f65c7",
+    "src/connectors/postgres.rs": "16bcd05baa079065e94290ad1b2b6a2f6993bf597a54645c333a4f378b5fa5ba",
+    "src/connectors/warehouse.rs": "0ed997de78ab6688694931ae8217be0d3e4404838a72a0eda5a7ecfe521699b0",
+    "src/engine.rs": "36f1c5c320e95602d4106342f01c49bd41fc7c929ab59c5274c33ebe7aa8dc9a",
+    "src/lib.rs": "dae6fefaf41996e344f24da6bba0843bf39a809868b716aff94441f7bb7413b7",
+    "src/main.rs": "ccc8ab22455fa9c8df4dc777f4d5837a9634a6b089ef5e7f4239a94779c19825",
+    "src/metrics.rs": "9fdc99cd4f2dce2d20b52f5fa0dcb299647c9437eff8b2874d243ebad7f56cae",
+    "src/pgwire.rs": "d1cebce5af980ed2e5c7fa704f4952fe55168ef39ee234d4e9e5d0b61105e97f",
+    "src/security.rs": "7649357bc057bc7bcc9fe36b111ec01b2ae290436833452fbeb2bb4f609d6531",
+    "Cargo.toml": "1d0709dcd4be4bb26d1e80fc4bf7e0cfeaa14ffcd630202456917e050ac6e8c0",
+    "Cargo.lock": "d7d8352c6a2a2f3ffc0b812688358a34a1bf9b6137f4ed20a2b0aeee774c1a32"
+  },
+  "harness_sha256": {
+    "benchmarks/compare_qe_host.py": "931738273898fb0cd9cfc114306133e925a4c336bee29dadbcc0d6559103184e",
+    "benchmarks/prepare_qe_host.py": "ffdfe7e3275254d7f83e96f8db8fcbc8719fa43e1e40400f2ffb6f4e22479bf3",
+    "benchmarks/compare.py": "39ff11a590c3e1d82b77bc994f4bc37e100b4836014d25f282b19c77b0538355",
+    "benchmarks/memmon.c": "8e52db80720761b0158f620b9aea2a5f6d0be36a09caf0206f70a775dc6dbe2c",
+    "benchmarks/workloads/compare.json": "ef436e0668802215fabfe71fc560c8d7cc9c2d5e348bca7ba40f1413d596274e"
+  },
+  "workloads": [
+    {
+      "name": "parquet_count",
+      "sql": "SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders"
+    },
+    {
+      "name": "parquet_filter",
+      "sql": "SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders WHERE order_id < 1000"
+    },
+    {
+      "name": "postgres_rls",
+      "sql": "SELECT region, COUNT(*) AS n FROM pg.customers GROUP BY region ORDER BY region"
+    },
+    {
+      "name": "federated_group",
+      "sql": "SELECT c.region, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id GROUP BY c.region ORDER BY c.region"
+    },
+    {
+      "name": "federated_selective",
+      "sql": "SELECT c.region, COUNT(*) AS n, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id WHERE c.id < 10 AND o.order_id < 10000 GROUP BY c.region ORDER BY c.region"
+    },
+    {
+      "name": "parquet_count_coarse",
+      "oracle": "parquet_count",
+      "sql": "SELECT COUNT(*) AS n, SUM(amount) AS total FROM lake.orders_coarse"
+    },
+    {
+      "name": "federated_group_coarse",
+      "oracle": "federated_group",
+      "sql": "SELECT c.region, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders_coarse o ON c.id=o.customer_id GROUP BY c.region ORDER BY c.region"
+    },
+    {
+      "name": "local_high_cardinality",
+      "sql": "SELECT COUNT(*) AS groups, SUM(total) AS total, SUM(n) AS rows FROM (SELECT order_id, SUM(amount) AS total, COUNT(*) AS n FROM local.orders GROUP BY order_id) t"
+    }
+  ],
+  "engines": {
+    "qe305": {
+      "container": "neura-hz-20260928-qe305",
+      "image": "datatailr/query-engine:0.1.0-pre305-amd64-pinned",
+      "image_id": "sha256:e8c2c8870235e7dcc20cca37fa34bd9984bfc86f615bd65ba28e3677a46fa7b2",
+      "port": 58403,
+      "config_path": "data/qe-host/qe305.json",
+      "config_sha256": "13dfad903681f1276efccf87d6c05f6d7a04041bbf943eaf97e630613f4bb3ef",
+      "options": {
+        "threads": 2,
+        "memory-limit": 512,
+        "pool-memory-mb": 512,
+        "data-cache-mb": 0,
+        "data-cache-pct": 0,
+        "result-cache-mb": 0,
+        "auto-optimize": "off",
+        "catalog-refresh": 0,
+        "pool-concurrency": 2,
+        "query-timeout-seconds": 120,
+        "max-spill-bytes": 4096
+      },
+      "runtime": "data/qe-host/runtime/qe305",
+      "kind": "qe",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "client_protocol": "authenticated native HTTP",
+      "memory_swap_bytes": 2147483648
+    },
+    "qe341": {
+      "container": "neura-hz-20260928-qe341",
+      "image": "datatailr/query-engine:0.1.0-pre341",
+      "image_id": "sha256:16b1b4c3c0a8911f3fde485449e947dd7ae05573c1c0573d5485541ecf52e6fc",
+      "port": 58404,
+      "config_path": "data/qe-host/qe341.json",
+      "config_sha256": "13dfad903681f1276efccf87d6c05f6d7a04041bbf943eaf97e630613f4bb3ef",
+      "options": {
+        "threads": 2,
+        "memory-limit": 512,
+        "pool-memory-mb": 512,
+        "data-cache-mb": 0,
+        "data-cache-pct": 0,
+        "result-cache-mb": 0,
+        "auto-optimize": "off",
+        "catalog-refresh": 0,
+        "pool-concurrency": 2,
+        "query-timeout-seconds": 120,
+        "max-spill-bytes": 4096
+      },
+      "runtime": "data/qe-host/runtime/qe341",
+      "kind": "qe",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "client_protocol": "authenticated native HTTP",
+      "memory_swap_bytes": 2147483648
+    }
+  },
+  "sources": {
+    "neura-hz-20260928-postgres": {
+      "image": "postgres:17.6",
+      "image_id": "sha256:00bc86618629af00d2937fdc5a5d63db3ff8450acf52f0636ec813c7f4902929",
+      "cpu_limit": 1.0,
+      "memory_limit_bytes": 536870912
+    },
+    "neura-hz-20260928-s3": {
+      "image": "chrislusf/seaweedfs:3.94",
+      "image_id": "sha256:d8ab8284bf4fd221e3cbf25f114f2f317c5bc942b1df032c43cc9d7bfe9bb1c6",
+      "cpu_limit": 1.0,
+      "memory_limit_bytes": 536870912
+    }
+  },
+  "samples": [
+    {
+      "engine": "qe305",
+      "workload": "parquet_count",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 169.97786611318588,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 165.29,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 55.602,
+        "jit_compiled": true,
+        "peak_memory_bytes": 8125000,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 1,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115"
+    },
+    {
+      "engine": "qe305",
+      "workload": "parquet_filter",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 61.71940267086029,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 57.118,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 26.8,
+        "jit_compiled": true,
+        "peak_memory_bytes": 16000,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 1,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc"
+    },
+    {
+      "engine": "qe305",
+      "workload": "postgres_rls",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 6.479410454630852,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "n",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 4.494851,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 0.0,
+        "jit_compiled": false,
+        "peak_memory_bytes": 0,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 0,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 0
+      },
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460"
+    },
+    {
+      "engine": "qe305",
+      "workload": "federated_group",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 277.5241509079933,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 273.383,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 5.801,
+        "jit_compiled": true,
+        "peak_memory_bytes": 48314108,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 2,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f"
+    },
+    {
+      "engine": "qe305",
+      "workload": "federated_selective",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 57.67394043505192,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 54.261,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 13.832,
+        "jit_compiled": true,
+        "peak_memory_bytes": 498209,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 2,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef"
+    },
+    {
+      "engine": "qe305",
+      "workload": "parquet_count_coarse",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 76.13749243319035,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 72.676,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 11.886,
+        "jit_compiled": true,
+        "peak_memory_bytes": 8125000,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 1,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115"
+    },
+    {
+      "engine": "qe305",
+      "workload": "federated_group_coarse",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 181.21440336108208,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 177.361,
+        "jit_cache_hit": true,
+        "jit_compile_time_ms": 0.0,
+        "jit_compiled": true,
+        "peak_memory_bytes": 48314108,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 2,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 1
+      },
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f"
+    },
+    {
+      "engine": "qe305",
+      "workload": "local_high_cardinality",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 172.1772700548172,
+      "correct": false,
+      "error": "{'error': \"ERROR:  query memory limit exceeded: CTE 't' used 526 MB > 512 MB --memory-limit (per-query cap); rewrite the query or raise --memory-limit\\n\", 'result': None}"
+    },
+    {
+      "engine": "qe341",
+      "workload": "parquet_count",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 184.28165465593338,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 296260,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 178.471,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 41.987,
+        "jit_compiled": true,
+        "peak_memory_bytes": 8125000,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 978,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115"
+    },
+    {
+      "engine": "qe341",
+      "workload": "parquet_filter",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 64.77311626076698,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 5787,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 59.996,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 25.931,
+        "jit_compiled": true,
+        "peak_memory_bytes": 32640,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 978,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc"
+    },
+    {
+      "engine": "qe341",
+      "workload": "postgres_rls",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 6.15994818508625,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 0,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "n",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 4.093355,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 0.0,
+        "jit_compiled": false,
+        "peak_memory_bytes": 0,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 0,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 0
+      },
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460"
+    },
+    {
+      "engine": "qe341",
+      "workload": "federated_group",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 261.7140803486109,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 1427718,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 257.316,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 5.791,
+        "jit_compiled": true,
+        "peak_memory_bytes": 48314145,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 978,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f"
+    },
+    {
+      "engine": "qe341",
+      "workload": "federated_selective",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 58.02113376557827,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 69487,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 53.502,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 18.4,
+        "jit_compiled": true,
+        "peak_memory_bytes": 747862,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 978,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef"
+    },
+    {
+      "engine": "qe341",
+      "workload": "parquet_count_coarse",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 130.44841960072517,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 33420,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "n",
+            "type_oid": 20
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 126.054,
+        "jit_cache_hit": false,
+        "jit_compile_time_ms": 12.392,
+        "jit_compiled": true,
+        "peak_memory_bytes": 8125000,
+        "row_count": 1,
+        "spill_bytes": 0,
+        "splits_scanned": 8,
+        "total_rows": 1,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115"
+    },
+    {
+      "engine": "qe341",
+      "workload": "federated_group_coarse",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 138.03113251924515,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "correct": true,
+      "diagnostic": {
+        "bytes_read": 94748,
+        "bytes_shuffled": 0,
+        "columns": [
+          {
+            "name": "region",
+            "type_oid": 25
+          },
+          {
+            "name": "total",
+            "type_oid": 20
+          }
+        ],
+        "duration_ms": 132.928,
+        "jit_cache_hit": true,
+        "jit_compile_time_ms": 0.0,
+        "jit_compiled": true,
+        "peak_memory_bytes": 48314145,
+        "row_count": 2,
+        "spill_bytes": 0,
+        "splits_scanned": 8,
+        "total_rows": 2,
+        "truncated": false,
+        "workers_used": 2
+      },
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f"
+    },
+    {
+      "engine": "qe341",
+      "workload": "local_high_cardinality",
+      "mode": "smoke",
+      "repeat": 0,
+      "latency_ms": 177.9000610113144,
+      "correct": false,
+      "error": "{'error': \"ERROR:  query memory limit exceeded: CTE 't' used 526 MB > 512 MB --memory-limit (per-query cap); rewrite the query or raise --memory-limit\\n\", 'result': None}"
+    }
+  ],
+  "primes": [],
+  "throughput": [],
+  "memory": [],
+  "startup": [
+    {
+      "engine": "qe305",
+      "phase": "governance",
+      "workload": null,
+      "elapsed_ms": 617.0989163219929,
+      "readiness_result": [
+        [
+          "1"
+        ]
+      ]
+    },
+    {
+      "engine": "qe341",
+      "phase": "governance",
+      "workload": null,
+      "elapsed_ms": 946.6925263404846,
+      "readiness_result": [
+        [
+          "1"
+        ]
+      ]
+    }
+  ],
+  "governance": [
+    {
+      "engine": "qe305",
+      "rls_passed": true,
+      "denied_table_passed": true,
+      "source_log_evidence": [
+        "2026-09-28 15:33:18.318 UTC [105] ERROR:  permission denied for table forbidden"
+      ],
+      "error": "{'error': 'ERROR:  permission denied for table forbidden\\n\\n', 'result': None}"
+    },
+    {
+      "engine": "qe341",
+      "rls_passed": true,
+      "denied_table_passed": true,
+      "source_log_evidence": [
+        "2026-09-28 15:33:20.847 UTC [108] ERROR:  permission denied for table forbidden"
+      ],
+      "error": "{'error': 'ERROR:  permission denied for table forbidden\\n\\n', 'result': None}"
+    }
+  ],
+  "errors": [],
+  "existing_services_before": {
+    "service-98217c2cc0ce": {
+      "image_id": "sha256:e8c2c8870235e7dcc20cca37fa34bd9984bfc86f615bd65ba28e3677a46fa7b2",
+      "pid": 75801,
+      "started_at": "2026-09-03T13:34:48.808778852Z",
+      "restart_count": 0
+    },
+    "service-3104be834ac7": {
+      "image_id": "sha256:a80fb7f790b50b0c25df1c361d1938280697ae3e897b41f7b8918d420f6b4133",
+      "pid": 384167,
+      "started_at": "2026-08-31T11:30:05.773895085Z",
+      "restart_count": 0
+    },
+    "service-95d6da5fac38": {
+      "image_id": "sha256:39321d67b23e2e0953f81b60778f74bf40c40a18dfb0e881e6a38593af60afa1",
+      "pid": 793166,
+      "started_at": "2026-09-07T13:39:47.176804258Z",
+      "restart_count": 0
+    },
+    "service-18f16244ee95": {
+      "image_id": "sha256:158d906e82c852127f65201ae02493eb7340180b377cffbc62899266df96bd9f",
+      "pid": 792838,
+      "started_at": "2026-09-07T13:39:46.039510379Z",
+      "restart_count": 0
+    },
+    "service-dbf8bfea14a7": {
+      "image_id": "sha256:c592c15aaf4a1961e15d82eb31ea5987dda862d1c4b1e93424438c0e91dc1f8d",
+      "pid": 1563832,
+      "started_at": "2026-07-20T20:07:38.280849111Z",
+      "restart_count": 0
+    },
+    "service-a013b77f3ea8": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 1535814,
+      "started_at": "2026-07-20T19:45:53.576857819Z",
+      "restart_count": 0
+    },
+    "service-daf82e2b017e": {
+      "image_id": "sha256:1d1f6508eba2dccce2cee9913907c5f7766327debc57a6b1991f2c9e3176c163",
+      "pid": 1357180,
+      "started_at": "2026-07-13T14:50:57.643411687Z",
+      "restart_count": 0
+    },
+    "service-bcee74f35bd3": {
+      "image_id": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "pid": 1357009,
+      "started_at": "2026-07-13T14:50:49.067326675Z",
+      "restart_count": 0
+    },
+    "service-de521290fa01": {
+      "image_id": "sha256:cfeb0b281bc44a5a51fecde39e9e577c60d863c0b6196e6bbdf58fd00960887f",
+      "pid": 2581011,
+      "started_at": "2026-06-12T09:29:55.204491515Z",
+      "restart_count": 0
+    },
+    "service-c604a09a6379": {
+      "image_id": "sha256:158d906e82c852127f65201ae02493eb7340180b377cffbc62899266df96bd9f",
+      "pid": 1572960,
+      "started_at": "2026-07-20T20:14:05.224638385Z",
+      "restart_count": 0
+    },
+    "service-037e6f1f320c": {
+      "image_id": "sha256:7da6d257a4c879f61b5010feca9d73ff70b069935505edb2ecff435cbe486bf9",
+      "pid": 1572138,
+      "started_at": "2026-07-20T20:13:54.331775923Z",
+      "restart_count": 0
+    },
+    "service-e473a32d74a7": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 1571854,
+      "started_at": "2026-07-20T20:13:53.242945845Z",
+      "restart_count": 0
+    },
+    "service-119521b8790d": {
+      "image_id": "sha256:c0b241c544d341c16a6d8cafcb801a071be9b02054a5add255e9a0e826095e88",
+      "pid": 1288446,
+      "started_at": "2026-06-07T09:59:53.665489006Z",
+      "restart_count": 0
+    },
+    "service-492e7bdb2665": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442619,
+      "started_at": "2026-06-16T11:39:43.316389182Z",
+      "restart_count": 0
+    },
+    "service-dd5d79b34e80": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442502,
+      "started_at": "2026-06-16T11:39:43.155398371Z",
+      "restart_count": 0
+    },
+    "service-8acfb7f6ae96": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442339,
+      "started_at": "2026-06-16T11:39:42.895756985Z",
+      "restart_count": 0
+    },
+    "service-487a7f74b84f": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 2802155,
+      "started_at": "2026-06-05T09:14:38.035108972Z",
+      "restart_count": 0
+    },
+    "service-efef2e6ccea0": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 22599,
+      "started_at": "2026-05-13T09:19:01.206785335Z",
+      "restart_count": 0
+    },
+    "service-e11cf22916d6": {
+      "image_id": "sha256:7d8cd4718071b5e4d2cac14fc09b73750cdcd96a2467baa03fdf6620b3430834",
+      "pid": 20743,
+      "started_at": "2026-05-13T09:18:45.572336187Z",
+      "restart_count": 0
+    }
+  },
+  "notes": [
+    "Same x86_64 host, immutable Parquet bytes and restricted PostgreSQL/S3 source accounts.",
+    "2 CPU and 2 GiB hard cgroup cap per engine; 512 MiB internal budgets have different accounting.",
+    "Primary profiles disable reusable data/result caching and auto-optimized result reuse in QE; Neura file cache off.",
+    "Native authenticated HTTP; client runs on server host. Neura uses a static bearer token/NDJSON; QE uses standalone JWT auth/buffered JSON. Full result consumption.",
+    "QE login occurs during readiness, outside query timing. Authentication implementations and catalog startup work differ.",
+    "QE result limit 100; all workloads return at most three rows. A result reaching the limit fails validation.",
+    "Cold means fresh engine process after SELECT 1 readiness; startup excluded. Source/OS/storage caches uncontrolled.",
+    "Engine order rotates per workload. Existing services stay running; this is a shared-host experiment.",
+    "Memory is a separate two-query pass, approximately 50 ms samples; brief peaks may be missed.",
+    "Per-process high-water sums need not coincide; PSS apportions shared pages. Cgroup includes startup and page cache.",
+    "Timing excludes memory-observer work; finite-batch throughput is not a saturation test.",
+    "Static fixture tests source grants/RLS, not equivalent snapshot/cache behavior under concurrent changes."
+  ],
+  "finished_at": "2026-09-28T15:33:22.389655+00:00",
+  "existing_services_after": {
+    "service-98217c2cc0ce": {
+      "image_id": "sha256:e8c2c8870235e7dcc20cca37fa34bd9984bfc86f615bd65ba28e3677a46fa7b2",
+      "pid": 75801,
+      "started_at": "2026-09-03T13:34:48.808778852Z",
+      "restart_count": 0
+    },
+    "service-3104be834ac7": {
+      "image_id": "sha256:a80fb7f790b50b0c25df1c361d1938280697ae3e897b41f7b8918d420f6b4133",
+      "pid": 384167,
+      "started_at": "2026-08-31T11:30:05.773895085Z",
+      "restart_count": 0
+    },
+    "service-95d6da5fac38": {
+      "image_id": "sha256:39321d67b23e2e0953f81b60778f74bf40c40a18dfb0e881e6a38593af60afa1",
+      "pid": 793166,
+      "started_at": "2026-09-07T13:39:47.176804258Z",
+      "restart_count": 0
+    },
+    "service-18f16244ee95": {
+      "image_id": "sha256:158d906e82c852127f65201ae02493eb7340180b377cffbc62899266df96bd9f",
+      "pid": 792838,
+      "started_at": "2026-09-07T13:39:46.039510379Z",
+      "restart_count": 0
+    },
+    "service-dbf8bfea14a7": {
+      "image_id": "sha256:c592c15aaf4a1961e15d82eb31ea5987dda862d1c4b1e93424438c0e91dc1f8d",
+      "pid": 1563832,
+      "started_at": "2026-07-20T20:07:38.280849111Z",
+      "restart_count": 0
+    },
+    "service-a013b77f3ea8": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 1535814,
+      "started_at": "2026-07-20T19:45:53.576857819Z",
+      "restart_count": 0
+    },
+    "service-daf82e2b017e": {
+      "image_id": "sha256:1d1f6508eba2dccce2cee9913907c5f7766327debc57a6b1991f2c9e3176c163",
+      "pid": 1357180,
+      "started_at": "2026-07-13T14:50:57.643411687Z",
+      "restart_count": 0
+    },
+    "service-bcee74f35bd3": {
+      "image_id": "sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "pid": 1357009,
+      "started_at": "2026-07-13T14:50:49.067326675Z",
+      "restart_count": 0
+    },
+    "service-de521290fa01": {
+      "image_id": "sha256:cfeb0b281bc44a5a51fecde39e9e577c60d863c0b6196e6bbdf58fd00960887f",
+      "pid": 2581011,
+      "started_at": "2026-06-12T09:29:55.204491515Z",
+      "restart_count": 0
+    },
+    "service-c604a09a6379": {
+      "image_id": "sha256:158d906e82c852127f65201ae02493eb7340180b377cffbc62899266df96bd9f",
+      "pid": 1572960,
+      "started_at": "2026-07-20T20:14:05.224638385Z",
+      "restart_count": 0
+    },
+    "service-037e6f1f320c": {
+      "image_id": "sha256:7da6d257a4c879f61b5010feca9d73ff70b069935505edb2ecff435cbe486bf9",
+      "pid": 1572138,
+      "started_at": "2026-07-20T20:13:54.331775923Z",
+      "restart_count": 0
+    },
+    "service-e473a32d74a7": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 1571854,
+      "started_at": "2026-07-20T20:13:53.242945845Z",
+      "restart_count": 0
+    },
+    "service-119521b8790d": {
+      "image_id": "sha256:c0b241c544d341c16a6d8cafcb801a071be9b02054a5add255e9a0e826095e88",
+      "pid": 1288446,
+      "started_at": "2026-06-07T09:59:53.665489006Z",
+      "restart_count": 0
+    },
+    "service-492e7bdb2665": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442619,
+      "started_at": "2026-06-16T11:39:43.316389182Z",
+      "restart_count": 0
+    },
+    "service-dd5d79b34e80": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442502,
+      "started_at": "2026-06-16T11:39:43.155398371Z",
+      "restart_count": 0
+    },
+    "service-8acfb7f6ae96": {
+      "image_id": "sha256:ada485e4bffb90f859b401dc04c393d147b5840846ef66b27110662eb2675854",
+      "pid": 3442339,
+      "started_at": "2026-06-16T11:39:42.895756985Z",
+      "restart_count": 0
+    },
+    "service-487a7f74b84f": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 2802155,
+      "started_at": "2026-06-05T09:14:38.035108972Z",
+      "restart_count": 0
+    },
+    "service-efef2e6ccea0": {
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "pid": 22599,
+      "started_at": "2026-05-13T09:19:01.206785335Z",
+      "restart_count": 0
+    },
+    "service-e11cf22916d6": {
+      "image_id": "sha256:7d8cd4718071b5e4d2cac14fc09b73750cdcd96a2467baa03fdf6620b3430834",
+      "pid": 20743,
+      "started_at": "2026-05-13T09:18:45.572336187Z",
+      "restart_count": 0
+    }
+  },
+  "publication_note": "Only unrelated existing-service names were hashed for publication; measured values are unchanged."
+}

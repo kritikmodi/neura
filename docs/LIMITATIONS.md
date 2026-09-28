@@ -38,3 +38,12 @@ queries count toward the selection. It is not a global CPU or memory scheduler.
 The optional cache reduced body bytes but did not consistently improve latency.
 Read-ahead increased origin bytes on the measured full join while reducing
 requests; cloud request/egress cost remains unmeasured.
+
+In the [native Hetzner comparison against QE](benchmark-results/2026-09-28-hetzner-qe.md),
+the optimized Neura engine remained slower on all six S3 workloads, despite fewer
+range requests. It had lower warm PostgreSQL/local-control latency and lower
+recorded high-water RSS in the successful comparisons. QE's memory-guard
+rejections and pre305's concurrent local-control OOM are workload-specific; they
+do not establish a general correctness or memory ranking. The benchmark's first
+S3 fixture OOM invalidated that attempt; the final run used a 1 GiB S3 cap and
+512 MiB Go soft memory limit shared identically by all engines. Full evidence is retained.
