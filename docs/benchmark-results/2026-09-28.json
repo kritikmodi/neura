@@ -1,0 +1,1995 @@
+{
+  "started_at": "2026-09-28T10:38:34.043314+00:00",
+  "fixture_rows": 1000000,
+  "source_fixture": "scripts/seed.py deterministic v1",
+  "neura_source_sha256": "54b0fb3b05d04e4cc1bf9cab67669da7ed4bfc70270255878add9900bee6ccbc",
+  "host": {
+    "platform": "macOS-15.6.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "logical_cpus": 12
+  },
+  "docker": {
+    "ServerVersion": "28.4.0",
+    "KernelVersion": "6.10.14-linuxkit",
+    "OperatingSystem": "Docker Desktop",
+    "Architecture": "aarch64",
+    "NCPU": 12,
+    "MemTotal": 16485011456
+  },
+  "fixture_sha256": {
+    "part-0.parquet": "c9cceb7da156351ba8d3c8e97f6e5f37b4d243e26c57d495a3cd377253507660",
+    "part-1.parquet": "71b249512a56424a481dc22a35948e81542ebd1473f77cc6ab037284cc0b9a2a"
+  },
+  "notes": [
+    "Cold means engine process restarted, health checked; source processes and OS/storage caches retained.",
+    "Warm samples follow a full successful priming query; no engine result caching enabled.",
+    "Latency includes client connect/authenticate, query and complete result fetch.",
+    "Cgroup memory includes runtime startup and file cache; cumulative high-water mark since restart.",
+    "No claim of storage-cold measurement or universal performance advantage."
+  ],
+  "engines": {
+    "neura": {
+      "image": "neura:0.1.0",
+      "image_id": "sha256:2a6f2dae35fc1166bf8a5aa573f0064f3a5e703f948f6458ca2ab8a52ccb3cb3",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648
+    },
+    "qe": {
+      "image": "datatailr/query-engine:0.1.0-pre300-arm64",
+      "image_id": "sha256:09dbc714405cfd8f31e450d70e1397ea92529102d26db33b48493dcdb10eeba4",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648
+    },
+    "spark": {
+      "image": "neura-spark-runtime:3.5.6",
+      "image_id": "sha256:b9c57597845ca10d9789f421da2a5f745b078a1071d655bffcc385db89cd4514",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 2147483648,
+      "memory_swap_bytes": 2147483648
+    }
+  },
+  "samples": [
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 15627.304375171661,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 10670080,
+      "cgroup_peak_since_restart_bytes": 11579392
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 15923.198208911344,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 14012416,
+      "cgroup_peak_since_restart_bytes": 14512128
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 15631.334707839414,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 13516800,
+      "cgroup_peak_since_restart_bytes": 14512128
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 15730.219874996692,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 14004224,
+      "cgroup_peak_since_restart_bytes": 14520320
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 15793.277750024572,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 13721600,
+      "cgroup_peak_since_restart_bytes": 14770176
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 15438.245124882087,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 13713408,
+      "cgroup_peak_since_restart_bytes": 14770176
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 102.74295788258314,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 11517952,
+      "cgroup_peak_since_restart_bytes": 12570624
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 85.74749995023012,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 13385728,
+      "cgroup_peak_since_restart_bytes": 14176256
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 83.6113749537617,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 13389824,
+      "cgroup_peak_since_restart_bytes": 14176256
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 85.63520899042487,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 14065664,
+      "cgroup_peak_since_restart_bytes": 14856192
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 71.69816689565778,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 13430784,
+      "cgroup_peak_since_restart_bytes": 14856192
+    },
+    {
+      "engine": "neura",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 70.75358415022492,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 13979648,
+      "cgroup_peak_since_restart_bytes": 14856192
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 58.103542076423764,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 11526144,
+      "cgroup_peak_since_restart_bytes": 12574720
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 55.86654203943908,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 13615104,
+      "cgroup_peak_since_restart_bytes": 16400384
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 55.77424983493984,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 12259328,
+      "cgroup_peak_since_restart_bytes": 16400384
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 55.94941694289446,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 13119488,
+      "cgroup_peak_since_restart_bytes": 16400384
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 56.38783401809633,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 13111296,
+      "cgroup_peak_since_restart_bytes": 16400384
+    },
+    {
+      "engine": "neura",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 56.9590840023011,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 13131776,
+      "cgroup_peak_since_restart_bytes": 16400384
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 15592.818166827783,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 15126528,
+      "cgroup_peak_since_restart_bytes": 16171008
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 15391.955374972895,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 17825792,
+      "cgroup_peak_since_restart_bytes": 18280448
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 15713.720167055726,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 17551360,
+      "cgroup_peak_since_restart_bytes": 18288640
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 16091.969666071236,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 17498112,
+      "cgroup_peak_since_restart_bytes": 18288640
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 16307.454416994005,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 17506304,
+      "cgroup_peak_since_restart_bytes": 18292736
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 16207.86629198119,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 17543168,
+      "cgroup_peak_since_restart_bytes": 18296832
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 431.99916696175933,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 13950976,
+      "cgroup_peak_since_restart_bytes": 14647296
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 408.9502920396626,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 16289792,
+      "cgroup_peak_since_restart_bytes": 17072128
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 410.7069168239832,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 16613376,
+      "cgroup_peak_since_restart_bytes": 17559552
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 428.32912504673004,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 16510976,
+      "cgroup_peak_since_restart_bytes": 17559552
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 432.10416682995856,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 17113088,
+      "cgroup_peak_since_restart_bytes": 17895424
+    },
+    {
+      "engine": "neura",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 396.9654580578208,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 17240064,
+      "cgroup_peak_since_restart_bytes": 18157568
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 65.86704193614423,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 68984832,
+      "cgroup_peak_since_restart_bytes": 76136448
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 8.495917078107595,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 86577152,
+      "cgroup_peak_since_restart_bytes": 87109632
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 8.36416706442833,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 94441472,
+      "cgroup_peak_since_restart_bytes": 95227904
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 8.504790952429175,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 103493632,
+      "cgroup_peak_since_restart_bytes": 104493056
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 8.979916106909513,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 112025600,
+      "cgroup_peak_since_restart_bytes": 112816128
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 9.9137919023633,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 128774144,
+      "cgroup_peak_since_restart_bytes": 129421312
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 48.47416700795293,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 45981696,
+      "cgroup_peak_since_restart_bytes": 47017984
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 2.4142919573932886,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 46403584,
+      "cgroup_peak_since_restart_bytes": 47468544
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 4.68345801346004,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 46891008,
+      "cgroup_peak_since_restart_bytes": 47816704
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 4.9779159016907215,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 46927872,
+      "cgroup_peak_since_restart_bytes": 47816704
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 4.2361668311059475,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 46870528,
+      "cgroup_peak_since_restart_bytes": 47816704
+    },
+    {
+      "engine": "qe",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 4.221375100314617,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 49008640,
+      "cgroup_peak_since_restart_bytes": 49979392
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 18.35858286358416,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 40935424,
+      "cgroup_peak_since_restart_bytes": 41988096
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 3.2962500117719173,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 40939520,
+      "cgroup_peak_since_restart_bytes": 41988096
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 11.121792020276189,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 40747008,
+      "cgroup_peak_since_restart_bytes": 41988096
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 4.975500050932169,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 40636416,
+      "cgroup_peak_since_restart_bytes": 41988096
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 7.641416043043137,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 41246720,
+      "cgroup_peak_since_restart_bytes": 42033152
+    },
+    {
+      "engine": "qe",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 7.234040880575776,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 40910848,
+      "cgroup_peak_since_restart_bytes": 42033152
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 111.15070804953575,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 130486272,
+      "cgroup_peak_since_restart_bytes": 145920000
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 34.39304186031222,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 146223104,
+      "cgroup_peak_since_restart_bytes": 168816640
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 31.816249946132302,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 156000256,
+      "cgroup_peak_since_restart_bytes": 177754112
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 31.120709143579006,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 173928448,
+      "cgroup_peak_since_restart_bytes": 195739648
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 31.357374973595142,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 187629568,
+      "cgroup_peak_since_restart_bytes": 208572416
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 31.12579183652997,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 204865536,
+      "cgroup_peak_since_restart_bytes": 226562048
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 45.74637487530708,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 55947264,
+      "cgroup_peak_since_restart_bytes": 57004032
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 4.488709149882197,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 59219968,
+      "cgroup_peak_since_restart_bytes": 59490304
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 4.159916890785098,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 58834944,
+      "cgroup_peak_since_restart_bytes": 59621376
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 3.537207841873169,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 61616128,
+      "cgroup_peak_since_restart_bytes": 62660608
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 3.3052500803023577,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 64024576,
+      "cgroup_peak_since_restart_bytes": 65064960
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 3.8327910006046295,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 63934464,
+      "cgroup_peak_since_restart_bytes": 65064960
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 827.6007079984993,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1178116096,
+      "cgroup_peak_since_restart_bytes": 1182875648
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 198.2507079374045,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1235836928,
+      "cgroup_peak_since_restart_bytes": 1239855104
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 189.32666699402034,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1239556096,
+      "cgroup_peak_since_restart_bytes": 1241649152
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 198.8136670552194,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1242345472,
+      "cgroup_peak_since_restart_bytes": 1244315648
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 177.55645792931318,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1245384704,
+      "cgroup_peak_since_restart_bytes": 1248108544
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_count",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 176.76687496714294,
+      "correct": true,
+      "rows": [
+        [
+          "1000000",
+          "8999964"
+        ]
+      ],
+      "result_sha256": "ea5736ebac0e0a31d89e97c338c9f33629b5d3459978a42b47c7a0fbb6ab8115",
+      "cgroup_current_bytes": 1250332672,
+      "cgroup_peak_since_restart_bytes": 1251520512
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 774.9140409287065,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1176711168,
+      "cgroup_peak_since_restart_bytes": 1177804800
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 206.32241712883115,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1185067008,
+      "cgroup_peak_since_restart_bytes": 1185869824
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 402.43675000965595,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1197883392,
+      "cgroup_peak_since_restart_bytes": 1198645248
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 188.49429092369974,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1201795072,
+      "cgroup_peak_since_restart_bytes": 1202593792
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 205.62949986197054,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1204822016,
+      "cgroup_peak_since_restart_bytes": 1205518336
+    },
+    {
+      "engine": "spark",
+      "workload": "parquet_filter",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 177.5705418549478,
+      "correct": true,
+      "rows": [
+        [
+          "1000",
+          "8979"
+        ]
+      ],
+      "result_sha256": "1625527ca9545d490a5e2fff79d9643b64e4283f56a2e7b1cf99717cf9bcaebc",
+      "cgroup_current_bytes": 1208623104,
+      "cgroup_peak_since_restart_bytes": 1209696256
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 691.3032499141991,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1162420224,
+      "cgroup_peak_since_restart_bytes": 1163014144
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 134.26595786586404,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1187409920,
+      "cgroup_peak_since_restart_bytes": 1188237312
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 123.57799988240004,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1193648128,
+      "cgroup_peak_since_restart_bytes": 1194258432
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 86.57629205845296,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1196228608,
+      "cgroup_peak_since_restart_bytes": 1196908544
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 114.00079191662371,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1206108160,
+      "cgroup_peak_since_restart_bytes": 1206534144
+    },
+    {
+      "engine": "spark",
+      "workload": "postgres_rls",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 86.14708390086889,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "50"
+        ],
+        [
+          "west",
+          "50"
+        ]
+      ],
+      "result_sha256": "23d6a147f55c37a209feb66c8619319bac9ab82fce1215acea4c68ac5c0f9460",
+      "cgroup_current_bytes": 1212538880,
+      "cgroup_peak_since_restart_bytes": 1213345792
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 1619.470875011757,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1396834304,
+      "cgroup_peak_since_restart_bytes": 1397891072
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 530.1721249707043,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1603313664,
+      "cgroup_peak_since_restart_bytes": 1604329472
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 512.2621660120785,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1631948800,
+      "cgroup_peak_since_restart_bytes": 1636278272
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 411.0559169203043,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1671327744,
+      "cgroup_peak_since_restart_bytes": 1672388608
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 452.94762519188225,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1704964096,
+      "cgroup_peak_since_restart_bytes": 1705807872
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 401.6159169841558,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "2249988"
+        ],
+        [
+          "west",
+          "2249990"
+        ]
+      ],
+      "result_sha256": "971daa4111ff53fe8e86f1f551db8314f98e29ffe48149186e7b8d9373031c6f",
+      "cgroup_current_bytes": 1738510336,
+      "cgroup_peak_since_restart_bytes": 1739038720
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "process_cold_storage_uncontrolled",
+      "repeat": 0,
+      "latency_ms": 1371.1298338603228,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1194639360,
+      "cgroup_peak_since_restart_bytes": 1195036672
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 0,
+      "latency_ms": 393.8237091060728,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1271099392,
+      "cgroup_peak_since_restart_bytes": 1271644160
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 1,
+      "latency_ms": 301.48491612635553,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1296728064,
+      "cgroup_peak_since_restart_bytes": 1297768448
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 2,
+      "latency_ms": 271.6194160748273,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1349353472,
+      "cgroup_peak_since_restart_bytes": 1350152192
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 3,
+      "latency_ms": 270.347666926682,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1377013760,
+      "cgroup_peak_since_restart_bytes": 1377808384
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_selective",
+      "mode": "warm",
+      "repeat": 4,
+      "latency_ms": 280.4107500705868,
+      "correct": true,
+      "rows": [
+        [
+          "east",
+          "200",
+          "1800"
+        ],
+        [
+          "west",
+          "250",
+          "2250"
+        ]
+      ],
+      "result_sha256": "143b86435641d76504a84cc6ed89275c4299f6daa1836f113d47050a477472ef",
+      "cgroup_current_bytes": 1381523456,
+      "cgroup_peak_since_restart_bytes": 1382375424
+    }
+  ],
+  "throughput": [
+    {
+      "engine": "neura",
+      "workload": "federated_group",
+      "concurrency": 2,
+      "elapsed_secs": 105.01633962499909,
+      "successful_queries": 10,
+      "successful_queries_per_second": 0.09522327702249779,
+      "samples": [
+        {
+          "latency_ms": 21082.125165965408,
+          "correct": true
+        },
+        {
+          "latency_ms": 20953.676750184968,
+          "correct": true
+        },
+        {
+          "latency_ms": 20995.124500012025,
+          "correct": true
+        },
+        {
+          "latency_ms": 21044.379874831066,
+          "correct": true
+        },
+        {
+          "latency_ms": 21081.27245819196,
+          "correct": true
+        },
+        {
+          "latency_ms": 21116.58625002019,
+          "correct": true
+        },
+        {
+          "latency_ms": 21040.023082867265,
+          "correct": true
+        },
+        {
+          "latency_ms": 21053.842459106818,
+          "correct": true
+        },
+        {
+          "latency_ms": 20774.835667107254,
+          "correct": true
+        },
+        {
+          "latency_ms": 20716.51045815088,
+          "correct": true
+        }
+      ],
+      "cgroup_current_bytes": 26779648,
+      "cgroup_peak_since_restart_bytes": 27557888
+    },
+    {
+      "engine": "qe",
+      "workload": "federated_group",
+      "concurrency": 2,
+      "elapsed_secs": 0.17170333303511143,
+      "successful_queries": 10,
+      "successful_queries_per_second": 58.23998767662309,
+      "samples": [
+        {
+          "latency_ms": 35.396709106862545,
+          "correct": true
+        },
+        {
+          "latency_ms": 32.241374952718616,
+          "correct": true
+        },
+        {
+          "latency_ms": 34.12195900455117,
+          "correct": true
+        },
+        {
+          "latency_ms": 35.94937501475215,
+          "correct": true
+        },
+        {
+          "latency_ms": 34.968082793056965,
+          "correct": true
+        },
+        {
+          "latency_ms": 33.29312498681247,
+          "correct": true
+        },
+        {
+          "latency_ms": 32.25166699849069,
+          "correct": true
+        },
+        {
+          "latency_ms": 32.75124984793365,
+          "correct": true
+        },
+        {
+          "latency_ms": 33.413000172004104,
+          "correct": true
+        },
+        {
+          "latency_ms": 33.75587519258261,
+          "correct": true
+        }
+      ],
+      "cgroup_current_bytes": 300818432,
+      "cgroup_peak_since_restart_bytes": 345808896
+    },
+    {
+      "engine": "spark",
+      "workload": "federated_group",
+      "concurrency": 2,
+      "elapsed_secs": 3.95746725006029,
+      "successful_queries": 10,
+      "successful_queries_per_second": 2.526868668299821,
+      "samples": [
+        {
+          "latency_ms": 763.8782088179141,
+          "correct": true
+        },
+        {
+          "latency_ms": 1079.797042068094,
+          "correct": true
+        },
+        {
+          "latency_ms": 733.9942918624729,
+          "correct": true
+        },
+        {
+          "latency_ms": 785.3631251491606,
+          "correct": true
+        },
+        {
+          "latency_ms": 766.679666005075,
+          "correct": true
+        },
+        {
+          "latency_ms": 801.0580001864582,
+          "correct": true
+        },
+        {
+          "latency_ms": 838.5579579044133,
+          "correct": true
+        },
+        {
+          "latency_ms": 705.0562498625368,
+          "correct": true
+        },
+        {
+          "latency_ms": 725.0861250795424,
+          "correct": true
+        },
+        {
+          "latency_ms": 585.3275419212878,
+          "correct": true
+        }
+      ],
+      "cgroup_current_bytes": 1873674240,
+      "cgroup_peak_since_restart_bytes": 1874288640
+    }
+  ]
+}

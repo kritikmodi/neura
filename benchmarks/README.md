@@ -11,6 +11,7 @@ source scripts/test-env.sh
 bash scripts/build-low-disk.sh
 python3 benchmarks/prepare.py
 uv run --with 'psycopg[binary]==3.2.10' benchmarks/run.py
+python3 benchmarks/memory_snapshot.py
 ```
 
 The setup refuses to replace an existing benchmark container. Remove only the named `neura-bench-neura`, `neura-bench-qe` and `neura-bench-spark` containers when intentionally starting a new experiment. The harness restarts only these containers. Do not reseed the fixture while queries are running: Neura deliberately rejects changed object ETags.
@@ -26,3 +27,5 @@ Neura client connections use SCRAM authentication. The local QE endpoint has no 
 Neura uses its default `parquet_row_filter_pushdown=false`: file/row-group pruning remains enabled, while row-level late materialization is opt-in. Diagnostic runs showed that row-level filtering increased range requests for this low-selectivity join. The published comparison uses the final source/image identity, not those interrupted diagnostic runs.
 
 Memory is Linux cgroup `memory.current` and `memory.peak`. Peak is cumulative since the last container restart, includes startup and filesystem cache, and is **not per-query RSS**. The harness refuses unequal limits and records image identities. Raw JSON goes to `results/comparison.json`, with wrong results and errors retained. It exits unsuccessfully if any correctness check fails. Published measurements and limitations are in `docs/VALIDATION.md` and `docs/benchmark-results/`.
+
+Shared mapped pages may be charged to another cgroup, so cgroup usage can be much lower than process RSS. `memory_snapshot.py` separately records the sum of process RSS from `docker top` after the entire suite. This is an idle snapshot, not peak RSS, and shared process pages can be double-counted. Do not treat either metric as complete unique physical-memory usage.

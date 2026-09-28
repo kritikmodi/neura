@@ -1,0 +1,45 @@
+{
+  "captured_at": "2026-09-28T10:46:35.955017+00:00",
+  "notes": [
+    "Idle snapshot after the entire suite; not per-query or peak process RSS.",
+    "RSS is summed across engine processes; shared pages can be double-counted.",
+    "Cgroup memory can charge shared mapped pages to other cgroups; it is a different measure."
+  ],
+  "engines": {
+    "neura": {
+      "summed_rss_bytes": 101797888,
+      "processes": [
+        {
+          "pid": 75304,
+          "rss_bytes": 101797888,
+          "command": "neura"
+        }
+      ]
+    },
+    "qe": {
+      "summed_rss_bytes": 421249024,
+      "processes": [
+        {
+          "pid": 78469,
+          "rss_bytes": 421249024,
+          "command": "dt-query-engine"
+        }
+      ]
+    },
+    "spark": {
+      "summed_rss_bytes": 941125632,
+      "processes": [
+        {
+          "pid": 81054,
+          "rss_bytes": 37515264,
+          "command": "python3"
+        },
+        {
+          "pid": 81090,
+          "rss_bytes": 903610368,
+          "command": "java"
+        }
+      ]
+    }
+  }
+}

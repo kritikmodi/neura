@@ -40,6 +40,8 @@ Use read-only principals with deliberately denied tables and known reference res
 
 ## Benchmark interpretation
 
-The reproducible harness and exact workload definitions are in `benchmarks/`. Published raw measurements and their summary are stored under `docs/benchmark-results/`. Each engine uses 2 CPUs and 2 GiB RAM with no additional swap. The same restricted source accounts, immutable fixture files and relational SQL are used. Every result is checked against an independent Python oracle.
+The reproducible harness and exact workload definitions are in `benchmarks/`. [Published measurements](benchmark-results/2026-09-28.md) include raw samples, image/source fingerprints and a separate idle RSS observation. All 90 latency samples and 30 throughput requests passed independent correctness checks. Each engine uses 2 CPUs and 2 GiB RAM with no additional swap. The same restricted source accounts, immutable fixture files and relational SQL are used.
+
+Warm federated-group medians: Neura 16,091.97 ms, Datatailr QE 31.36 ms, Spark 452.95 ms. At concurrency two, measured correct-query throughput was 0.095, 58.240 and 2.527 queries/s respectively. Neura is materially slower on this full-scan fixture. Its warm selective Parquet median was 83.61 ms; file/row-group pruning works, while cross-row-group read-ahead remains an optimization gap. This is an initial engine with measured limitations, not a performance replacement claim.
 
 Cold means **engine process restarted, storage caches uncontrolled**, after readiness checks. Warm means after a successful full priming query. There is no storage-cold claim. Cgroup peak memory includes startup and filesystem cache and is cumulative since each restart. This small local synthetic comparison cannot establish general superiority, production sizing, cloud egress economics or distributed scaling. See `benchmarks/README.md` for protocol and internal-memory-accounting differences.

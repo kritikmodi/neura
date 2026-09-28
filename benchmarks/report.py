@@ -10,6 +10,7 @@ import statistics
 p = argparse.ArgumentParser()
 p.add_argument("input", type=pathlib.Path)
 p.add_argument("output", type=pathlib.Path)
+p.add_argument("--memory", type=pathlib.Path)
 a = p.parse_args()
 r = json.loads(a.input.read_text())
 groups = collections.defaultdict(list)
@@ -63,6 +64,26 @@ lines += [
     "",
     "See [methodology](../../benchmarks/README.md), [validation and blocked cloud tests](../VALIDATION.md), and [limitations](../LIMITATIONS.md). Exact image identities, raw samples and checksums are in the adjacent JSON.",
 ]
-lines += ["", "Neura uses SCRAM for each measured client connection; QE has no client password configured and the local Spark adapter is unauthenticated. All source credentials/policies are identical. Short-query numbers include different authentication overhead and do not isolate execution time. The 1,024-row Parquet groups exercise pruning but amplify small-range request overhead on full scans. Other user containers remained running on the shared Docker host; no exclusive-machine claim is made."]
+lines += [
+    "",
+    "Neura uses SCRAM for each measured client connection; QE has no client password configured and the local Spark adapter is unauthenticated. All source credentials/policies are identical. Short-query numbers include different authentication overhead and do not isolate execution time. The 1,024-row Parquet groups exercise pruning but amplify small-range request overhead on full scans. Other user containers remained running on the shared Docker host; no exclusive-machine claim is made.",
+]
+if a.memory:
+    memory = json.loads(a.memory.read_text())
+    lines += [
+        "",
+        "Separate idle process-RSS observation after the suite:",
+        "",
+        "| Engine | Sum of process RSS MiB |",
+        "|---|---:|",
+    ]
+    for engine, value in memory["engines"].items():
+        lines.append(f"| {engine} | {value['summed_rss_bytes'] / 1024**2:.1f} |")
+    lines += [
+        "",
+        "This is an idle snapshot, not peak RSS. Summing process RSS can double-count shared pages. Cgroup accounting can charge shared mapped pages elsewhere, so its smaller values must not be interpreted as total process footprint.",
+        "",
+        f"[Raw samples]({a.input.name}) · [RSS observations]({a.memory.name})",
+    ]
 a.output.parent.mkdir(parents=True, exist_ok=True)
 a.output.write_text("\n".join(lines) + "\n")
