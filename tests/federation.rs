@@ -102,6 +102,27 @@ async fn concurrency_and_cancel() {
     drop(q2);
     assert!(e.collect("SELECT 3").await.is_ok());
 }
+
+#[tokio::test]
+#[ignore = "requires real PostgreSQL and S3 fixtures"]
+async fn early_join_completion_returns_postgres_connection_cleanly() {
+    let e = fixture();
+    for _ in 0..3 {
+        let (_, rows) = tokio::time::timeout(
+            std::time::Duration::from_secs(10),
+            e.collect("SELECT o.order_id, c.region FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id LIMIT 1"),
+        ).await.expect("LIMIT query left source cleanup waiting").unwrap();
+        assert_eq!(rows.iter().map(|b| b.num_rows()).sum::<usize>(), 1);
+        let (_, count) = e
+            .collect("SELECT COUNT(*) FROM pg.customers")
+            .await
+            .unwrap();
+        assert_eq!(
+            neura::api::row(&count[0], 0).unwrap(),
+            vec![Some("100".into())]
+        );
+    }
+}
 #[tokio::test]
 #[ignore = "requires NEURA_CLOUD_CONFIG and actual cloud credentials; never mocked"]
 async fn cloud_connectors() {

@@ -12,6 +12,7 @@ pub struct Config {
     #[serde(default)]
     pub sources: Vec<Source>,
 }
+
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Limits {
@@ -28,6 +29,13 @@ pub struct Limits {
     pub max_spill_mb: u64,
     pub sort_merge_reservation_mb: usize,
     pub parquet_row_filter_pushdown: bool,
+    /// S3 read-ahead window; zero disables adaptive read-ahead.
+    pub s3_read_ahead_kb: usize,
+    /// Per-query cap, reserved from the shared execution memory pool.
+    pub s3_read_ahead_budget_mb: usize,
+    /// Reusable S3 file cache, carved out of memory_mb. Zero disables it.
+    pub file_cache_mb: usize,
+    pub file_cache_max_object_mb: usize,
 }
 impl Default for Limits {
     fn default() -> Self {
@@ -45,6 +53,10 @@ impl Default for Limits {
             max_spill_mb: 4096,
             sort_merge_reservation_mb: 16,
             parquet_row_filter_pushdown: false,
+            s3_read_ahead_kb: 256,
+            s3_read_ahead_budget_mb: 2,
+            file_cache_mb: 0,
+            file_cache_max_object_mb: 8,
         }
     }
 }
@@ -217,6 +229,22 @@ impl Config {
     }
     pub fn validate(&self) -> Result<()> {
         let l = &self.limits;
+        ensure!(
+            l.memory_mb.checked_mul(1024 * 1024).is_some()
+                && l.file_cache_mb < l.memory_mb
+                && l.memory_mb - l.file_cache_mb >= 32
+                && l.sort_merge_reservation_mb < l.memory_mb - l.file_cache_mb
+                && l.s3_read_ahead_kb.checked_mul(1024).is_some()
+                && l.s3_read_ahead_budget_mb.checked_mul(1024 * 1024).is_some()
+                && l.file_cache_max_object_mb
+                    .checked_mul(1024 * 1024)
+                    .is_some()
+                && (l.file_cache_mb == 0 || l.file_cache_max_object_mb > 0)
+                && (l.s3_read_ahead_kb == 0
+                    || (l.s3_read_ahead_budget_mb > 0
+                        && l.s3_read_ahead_kb <= l.s3_read_ahead_budget_mb.saturating_mul(1024))),
+            "invalid cache or read-ahead memory limits"
+        );
         ensure!(
             l.memory_mb >= 32
                 && l.sort_merge_reservation_mb > 0
@@ -395,5 +423,35 @@ impl Config {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod resource_tests {
+    use super::*;
+
+    #[test]
+    fn cache_budget_leaves_execution_and_sort_headroom() {
+        let mut config: Config = toml::from_str("").unwrap();
+        config.limits.memory_mb = 64;
+        config.limits.file_cache_mb = 32;
+        assert!(config.validate().is_ok());
+        config.limits.file_cache_mb = 33;
+        assert!(config.validate().is_err());
+        config.limits.file_cache_mb = 32;
+        config.limits.sort_merge_reservation_mb = 32;
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn rejects_overflow_and_windows_larger_than_the_read_ahead_budget() {
+        let mut config: Config = toml::from_str("").unwrap();
+        config.limits.s3_read_ahead_kb = 2049;
+        assert!(config.validate().is_err());
+        config.limits.s3_read_ahead_kb = 0;
+        config.limits.s3_read_ahead_budget_mb = 0;
+        assert!(config.validate().is_ok());
+        config.limits.memory_mb = usize::MAX;
+        assert!(config.validate().is_err());
     }
 }

@@ -1,4 +1,5 @@
 mod arrow_stream;
+pub mod cache;
 pub mod clickhouse;
 pub mod files;
 pub mod instrument;
@@ -58,15 +59,37 @@ impl Remote {
         cancel: CancellationToken,
         context: String,
     ) -> anyhow::Result<Self> {
+        Self::new_pooled(source, metrics, limits, cancel, context, None).await
+    }
+    pub async fn new_pooled(
+        source: Source,
+        metrics: Metrics,
+        limits: Limits,
+        cancel: CancellationToken,
+        context: String,
+        pg_pool: Option<Arc<postgres::Pool>>,
+    ) -> anyhow::Result<Self> {
         let pg = if let Connection::Postgres {
             dsn_env,
             allow_insecure,
         } = &source.connection
         {
-            Some(
-                postgres::Session::connect(dsn_env, *allow_insecure, &limits, cancel.clone())
-                    .await?,
-            )
+            Some(match pg_pool {
+                Some(pool) => {
+                    postgres::Session::connect_pooled(
+                        pool,
+                        dsn_env,
+                        *allow_insecure,
+                        &limits,
+                        cancel.clone(),
+                    )
+                    .await?
+                }
+                None => {
+                    postgres::Session::connect(dsn_env, *allow_insecure, &limits, cancel.clone())
+                        .await?
+                }
+            })
         } else {
             None
         };
@@ -270,34 +293,34 @@ impl SQLExecutor for Remote {
             };
             if let Ok(stmt) = sql {
                 let _timer = self.metrics.timer(&self.source.name);
-                let client = pg.client.lock().await;
-                if client
-                    .batch_execute("SAVEPOINT neura_estimate")
-                    .await
-                    .is_err()
-                {
-                    return Ok(stats);
-                }
-                if let Ok(rows) = client
-                    .query(&format!("EXPLAIN (FORMAT JSON) {stmt}"), &[])
-                    .await
-                    && let Some(row) = rows.first()
-                    && let Ok(v) = row.try_get::<_, serde_json::Value>(0)
-                {
-                    let p = &v[0]["Plan"];
-                    if let Some(n) = p["Plan Rows"].as_u64() {
-                        stats.num_rows = Precision::Inexact(n as usize);
-                        stats.total_byte_size = Precision::Inexact(
-                            (n * p["Plan Width"].as_u64().unwrap_or(0)) as usize,
-                        );
+                let client = pg.client().await.map_err(df_error)?;
+                // One protocol round trip on success, retaining a savepoint so
+                // a denied/unsupported optional estimate cannot abort the
+                // query's repeatable-read transaction.
+                match client.simple_query(&format!(
+                    "SAVEPOINT neura_estimate; EXPLAIN (FORMAT JSON) {stmt}; RELEASE SAVEPOINT neura_estimate"
+                )).await {
+                    Ok(rows) => {
+                        if let Some(v) = rows.iter().find_map(|r| {
+                            if let tokio_postgres::SimpleQueryMessage::Row(row) = r {
+                                serde_json::from_str::<serde_json::Value>(row.get(0)?).ok()
+                            } else { None }
+                        }) {
+                            let p = &v[0]["Plan"];
+                            if let Some(n) = p["Plan Rows"].as_u64() {
+                                stats.num_rows = Precision::Inexact(n as usize);
+                                stats.total_byte_size = Precision::Inexact(
+                                    (n * p["Plan Width"].as_u64().unwrap_or(0)) as usize,
+                                );
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        let _ = client.batch_execute(
+                            "ROLLBACK TO SAVEPOINT neura_estimate; RELEASE SAVEPOINT neura_estimate"
+                        ).await;
                     }
                 }
-                // A failed optional estimate must not poison the read transaction.
-                let _ = client
-                    .batch_execute(
-                        "ROLLBACK TO SAVEPOINT neura_estimate; RELEASE SAVEPOINT neura_estimate",
-                    )
-                    .await;
             }
         }
         Ok(stats)

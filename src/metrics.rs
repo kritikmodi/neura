@@ -12,6 +12,15 @@ pub struct SourceMetric {
     pub arrow_bytes: u64,
     pub rows: u64,
     pub remote_bytes_processed: Option<u64>,
+    /// Reuses of bytes already fetched for this query.
+    pub read_ahead_hits: u64,
+    /// Extra origin bytes fetched by bounded read-ahead.
+    pub read_ahead_bytes: u64,
+    pub cache_hits: u64,
+    pub cache_misses: u64,
+    /// Bytes served from the reusable file cache, excluding authorization probes.
+    pub cache_bytes: u64,
+    pub cache_evictions: u64,
 }
 #[derive(Clone, Default)]
 pub struct Metrics(pub Arc<Mutex<BTreeMap<String, SourceMetric>>>);

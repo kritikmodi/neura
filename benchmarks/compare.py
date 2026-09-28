@@ -15,7 +15,8 @@ import urllib.error
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PORTS = {"neura": 58102, "spark": 58101, "duckdb": int(os.environ.get("NEURA_BENCH_DUCKDB_PORT", "58103"))}
+PORTS = {"neura": int(os.environ.get("NEURA_BENCH_NEURA_PORT", "58102")), "spark": 58101,
+    "duckdb": int(os.environ.get("NEURA_BENCH_DUCKDB_PORT", "58103"))}
 PREFIX = os.environ.get("NEURA_BENCH_PREFIX", "neura-compare-")
 TEMP_ROOT = pathlib.Path(os.environ.get("NEURA_BENCH_TMP_ROOT", str(ROOT / "data/compare-runtime")))
 
@@ -147,7 +148,7 @@ def main():
             "Cold is process-cold after readiness, excluding startup; source/OS/storage caches retained.",
             "Spark and DuckDB discover schemas during startup; Neura does so during queries.",
             "Authenticated HTTP end-to-end full-fetch latency; Neura NDJSON, other adapters JSON; adapters differ.",
-            "No explicit result/table caches; DuckDB file-cache setting is recorded in engine metadata. Connection/metadata/OS caches remain.",
+            "No explicit SQL result/table caches; Neura file-cache limits and DuckDB file-cache settings are recorded. Connection/metadata/OS caches remain.",
             "Engines execute sequentially; their order rotates per workload. Shared host is not exclusive.",
             "Memory measured separately from latency at roughly 50ms intervals; short-lived peaks may be missed.",
             "RSS sums may double-count shared pages; PSS apportions them. Sum of process HWM is not a simultaneous peak.",
@@ -188,6 +189,25 @@ def main():
         assert not info["State"]["Running"], f"Stop {engine}'s benchmark container before a new run"
         report["engines"][engine] = {"image": info["Config"]["Image"], "image_id": info["Image"],
             "cpu_limit": 2, "memory_limit_bytes": host["Memory"], "memory_swap_bytes": host["MemorySwap"]}
+        if engine == "neura":
+            command = info["Config"]["Cmd"]
+            flag = next((flag for flag in ("-c", "--config") if flag in command), None)
+            if flag:
+                config_path = pathlib.PurePosixPath(command[command.index(flag) + 1])
+                for mount in sorted(info["Mounts"], key=lambda m: len(m["Destination"]), reverse=True):
+                    try:
+                        relative = config_path.relative_to(mount["Destination"])
+                    except ValueError:
+                        continue
+                    local_config = pathlib.Path(mount["Source"]) / relative
+                    if local_config.is_file():
+                        content = local_config.read_bytes()
+                        report["engines"][engine]["config_sha256"] = hashlib.sha256(content).hexdigest()
+                        # Only limits are recorded; connector config may refer to credentials.
+                        limits = content.decode().split("[limits]", 1)
+                        if len(limits) == 2:
+                            report["engines"][engine]["limits_toml"] = limits[1].split("[", 1)[0].strip()
+                    break
     save()
     active = None
     try:

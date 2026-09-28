@@ -1,5 +1,6 @@
 use crate::{
     config::{Connection, Source, Table},
+    connectors::cache::{CachedStore, ReadCache},
     metrics::Metrics,
 };
 use anyhow::{Context, Result, ensure};
@@ -25,12 +26,17 @@ use object_store::{
 };
 use std::{collections::HashMap, fmt, sync::Arc};
 
+mod read_ahead;
+pub use read_ahead::ReadAheadBudget;
+
 #[derive(Clone)]
 pub struct PinnedStore {
     inner: Arc<dyn ObjectStore>,
     pins: Arc<HashMap<Path, String>>,
     metrics: Metrics,
     name: String,
+    read_ahead: Option<Arc<read_ahead::ReadAhead>>,
+    measure_origin: bool,
 }
 impl fmt::Debug for PinnedStore {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -63,7 +69,53 @@ impl PinnedStore {
             pins: Arc::new(pins),
             metrics,
             name,
+            read_ahead: None,
+            measure_origin: true,
         }
+    }
+
+    fn with_read_ahead(mut self, budget: Arc<ReadAheadBudget>, window: usize) -> Self {
+        if window > 0 {
+            self.read_ahead = Some(Arc::new(read_ahead::ReadAhead::new(
+                self.pins.keys().cloned(),
+                budget,
+                window,
+                self.metrics.clone(),
+                self.name.clone(),
+            )));
+        }
+        self
+    }
+
+    async fn fetch_opts(&self, path: &Path, opts: GetOptions) -> object_store::Result<GetResult> {
+        if !self.measure_origin {
+            return self.inner.get_opts(path, opts).await;
+        }
+        let timer = self.metrics.timer(&self.name);
+        let result = self.inner.get_opts(path, opts).await?;
+        let meta = result.meta.clone();
+        let range = result.range.clone();
+        let attributes = result.attributes.clone();
+        let metrics = self.metrics.clone();
+        let name = self.name.clone();
+        let payload = async_stream::try_stream! {
+            let _timer = timer;
+            let mut input = result.into_stream();
+            while let Some(bytes) = input.next().await {
+                let bytes = bytes?;
+                metrics.update(&name, |m| {
+                    m.response_bytes = Some(m.response_bytes.unwrap_or(0) + bytes.len() as u64)
+                });
+                yield bytes;
+            }
+        }
+        .boxed();
+        Ok(GetResult {
+            payload: GetResultPayload::Stream(payload),
+            meta,
+            range,
+            attributes,
+        })
     }
 }
 #[async_trait]
@@ -94,31 +146,19 @@ impl ObjectStore for PinnedStore {
     }
     async fn get_opts(&self, path: &Path, mut opts: GetOptions) -> object_store::Result<GetResult> {
         let etag = self.pins.get(path).ok_or_else(denied)?;
+        // A wildcard or alternative ETag list would turn a manifest pin into a
+        // moving target and cannot be used as a read-ahead/cache identity.
+        if etag.is_empty() || etag == "*" || etag.contains(',') {
+            return Err(denied());
+        }
         opts.if_match = Some(etag.clone());
-        let _timer = self.metrics.timer(&self.name);
-        let result = self.inner.get_opts(path, opts).await?;
-        let meta = result.meta.clone();
-        let range = result.range.clone();
-        let attributes = result.attributes.clone();
-        let metrics = self.metrics.clone();
-        let name = self.name.clone();
-        let payload = result
-            .into_stream()
-            .map(move |b| {
-                if let Ok(b) = &b {
-                    metrics.update(&name, |m| {
-                        m.response_bytes = Some(m.response_bytes.unwrap_or(0) + b.len() as u64)
-                    });
-                }
-                b
-            })
-            .boxed();
-        Ok(GetResult {
-            payload: GetResultPayload::Stream(payload),
-            meta,
-            range,
-            attributes,
-        })
+        if let Some(read_ahead) = &self.read_ahead {
+            read_ahead
+                .get(path, opts, |opts| self.fetch_opts(path, opts))
+                .await
+        } else {
+            self.fetch_opts(path, opts).await
+        }
     }
     fn list(&self, prefix: Option<&Path>) -> BoxStream<'static, object_store::Result<ObjectMeta>> {
         let paths: Vec<_> = self
@@ -158,7 +198,10 @@ pub async fn parquet(
     ctx: &SessionContext,
     source: &Source,
     metrics: Metrics,
+    read_ahead: Option<(Arc<ReadAheadBudget>, usize)>,
+    cache: Option<Arc<ReadCache>>,
 ) -> Result<Vec<(String, Arc<dyn TableProvider>)>> {
+    let cached_s3 = cache.is_some() && matches!(&source.connection, Connection::S3 { .. });
     let (store, root): (Arc<dyn ObjectStore>, String) = match &source.connection {
         Connection::S3 {
             bucket,
@@ -176,7 +219,21 @@ pub async fn parquet(
                     .with_endpoint(endpoint)
                     .with_virtual_hosted_style_request(false);
             }
-            (Arc::new(b.build()?), format!("s3://{bucket}"))
+            let s3 = Arc::new(b.build()?);
+            let store: Arc<dyn ObjectStore> = if let Some(cache) = cache {
+                Arc::new(CachedStore::s3(
+                    s3,
+                    cache,
+                    source.name.clone(),
+                    endpoint.as_deref(),
+                    region,
+                    bucket,
+                    metrics.clone(),
+                ))
+            } else {
+                s3
+            };
+            (store, format!("s3://{bucket}"))
         }
         Connection::Parquet {} => (
             Arc::new(object_store::local::LocalFileSystem::new()),
@@ -201,12 +258,17 @@ pub async fn parquet(
             let etag = if let Some(etag) = &f.etag {
                 etag.clone()
             } else {
+                let _timer = (!cached_s3).then(|| metrics.timer(&source.name));
                 store
                     .head(&path)
                     .await?
                     .e_tag
                     .context("file store has no ETag; cannot pin file")?
             };
+            ensure!(
+                !etag.is_empty() && etag != "*" && !etag.contains(','),
+                "manifest ETags must identify one concrete object version"
+            );
             if let Some(old) = pins.insert(path, etag.clone()) {
                 ensure!(old == etag, "conflicting ETags in manifest");
             }
@@ -214,7 +276,14 @@ pub async fn parquet(
         }
         paths.insert(table.name.clone(), urls);
     }
-    let wrapper = Arc::new(PinnedStore::new(store, pins, metrics, source.name.clone()));
+    let mut wrapper = PinnedStore::new(store, pins, metrics, source.name.clone());
+    wrapper.measure_origin = !cached_s3;
+    if matches!(&source.connection, Connection::S3 { .. })
+        && let Some((budget, window)) = read_ahead
+    {
+        wrapper = wrapper.with_read_ahead(budget, window);
+    }
+    let wrapper = Arc::new(wrapper);
     ctx.runtime_env()
         .register_object_store(&url::Url::parse(&root)?, wrapper);
     let mut result = vec![];
@@ -364,5 +433,70 @@ mod tests {
         assert!(pinned.get(&p).await.is_err());
         assert!(pinned.put(&p, "bad".into()).await.is_err());
         assert!(pinned.get(&Path::from("other")).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn read_ahead_is_manifest_scoped_and_never_shared_between_queries() {
+        use datafusion::execution::memory_pool::GreedyMemoryPool;
+        let store = Arc::new(object_store::memory::InMemory::new());
+        let path = Path::from("orders.parquet");
+        let secret = Path::from("not_in_manifest.parquet");
+        store.put(&path, vec![1; 128].into()).await.unwrap();
+        store.put(&secret, vec![9; 128].into()).await.unwrap();
+        let tag = store.head(&path).await.unwrap().e_tag.unwrap();
+        let metrics = Metrics::default();
+        let budget = Arc::new(ReadAheadBudget::new(
+            Arc::new(GreedyMemoryPool::new(128)),
+            128,
+        ));
+        let first = PinnedStore::new(
+            store.clone(),
+            HashMap::from([(path.clone(), tag.clone())]),
+            metrics.clone(),
+            "s3".into(),
+        )
+        .with_read_ahead(budget.clone(), 32);
+        for start in [0, 4, 8, 12] {
+            assert_eq!(
+                first
+                    .get_range(&path, start..start + 4)
+                    .await
+                    .unwrap()
+                    .as_ref(),
+                &[1; 4]
+            );
+        }
+        assert_eq!(metrics.snapshot()["s3"].requests, 3);
+        assert_eq!(metrics.snapshot()["s3"].read_ahead_hits, 1);
+        assert!(first.get_range(&secret, 12..16).await.is_err());
+        assert_eq!(metrics.snapshot()["s3"].requests, 3);
+        store.put(&path, vec![2; 128].into()).await.unwrap();
+        let second = PinnedStore::new(
+            store,
+            HashMap::from([(path.clone(), tag)]),
+            metrics,
+            "s3".into(),
+        )
+        .with_read_ahead(budget, 32);
+        assert!(matches!(
+            second.get_range(&path, 12..16).await,
+            Err(object_store::Error::Precondition { .. })
+        ));
+    }
+
+    #[tokio::test]
+    async fn rejects_wildcard_and_multi_version_manifest_pins() {
+        let store = Arc::new(object_store::memory::InMemory::new());
+        let path = Path::from("orders.parquet");
+        store.put(&path, "rows".into()).await.unwrap();
+        for tag in ["*", "one,two", ""] {
+            let pinned = PinnedStore::new(
+                store.clone(),
+                HashMap::from([(path.clone(), tag.into())]),
+                Metrics::default(),
+                "s3".into(),
+            );
+            assert!(pinned.get(&path).await.is_err());
+        }
     }
 }

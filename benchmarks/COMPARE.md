@@ -119,6 +119,38 @@ The setting is asserted from live metadata. Warm cached results must be labelled
 separately from the baseline; process-cold measurements and the separate memory
 pass remain present. This is file caching, not precomputed query-result caching.
 
+## Revised Neura profiles
+
+Keep the original image and benchmark containers for historical reproduction.
+Build the revised engine under a separate tag, then create separate profiles:
+
+```sh
+source scripts/test-env.sh
+NEURA_IMAGE=neura:optimized scripts/build-low-disk.sh
+python3 benchmarks/prepare_optimized.py --image neura:optimized
+NEURA_BENCH_PREFIX=neura-optimized- NEURA_BENCH_NEURA_PORT=58112 \
+  NEURA_BENCH_TMP_ROOT="$PWD/data/optimized/runtime" \
+  python3 benchmarks/compare.py --engines neura --output results/optimized.json
+NEURA_BENCH_PREFIX=neura-optimized-cache- NEURA_BENCH_NEURA_PORT=58114 \
+  NEURA_BENCH_TMP_ROOT="$PWD/data/optimized-cache/runtime" \
+  python3 benchmarks/compare.py --engines neura --output results/optimized-cache.json
+python3 benchmarks/report_optimized.py \
+  docs/benchmark-results/2026-09-28-spark-duckdb.json \
+  results/optimized.json results/optimized-cache.json results/optimized.md
+```
+
+Both profiles retain the same fixture and resource limits. The first uses the
+revised defaults with no reusable file cache; the second enables a 32 MiB cache,
+deducted from the 512 MiB total execution/cache budget. Cache hits perform live
+conditional GetObject authorization. The harness records the actual config hash
+and resource-limit section. `prepare_optimized.py` refuses to replace containers.
+Finish one profile before starting the next. Existing demo processes mapping the
+same binary can affect PSS accounting; record any temporary pause and restore
+them after measurement.
+
+The generated report explicitly labels earlier engine measurements as historical
+references. Do not describe them as a simultaneous rerun of Spark and DuckDB.
+
 ## Official connector references
 
 - [DuckDB PostgreSQL extension](https://duckdb.org/docs/current/core_extensions/postgres/overview)
