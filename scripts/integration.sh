@@ -2,6 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.cargo/bin:$PATH"
+# Create the parent as the invoking user before Docker creates bind directories.
+mkdir -p data
 docker compose -f deploy/compose.test.yml up -d --wait
 uv run --with pyarrow==21.0.0 --with boto3==1.40.40 scripts/seed.py
 source scripts/test-env.sh

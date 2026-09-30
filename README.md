@@ -70,6 +70,10 @@ scripts/wire-integration.sh
 
 ## Deploy and integrate
 
+Private versioned Docker images and the Cube variant are distributed through
+GHCR. See [private release installation and upgrades](docs/RELEASES.md) for registry
+login, pulling an image and deployment without building from source.
+
 ```sh
 docker build -t neura:0.1.0 .
 # If Docker's VM disk is small, use scripts/build-low-disk.sh instead.
