@@ -34,7 +34,7 @@ cargo run --locked -- -c examples/empty.toml query 'SELECT 1 AS hello'
 
 Results are NDJSON: a schema record, zero or more row records, and a completion record. Values are strings or null to preserve 64-bit integers and decimals. A missing completion record means the result is incomplete. `query '...' --diagnostics` writes diagnostics to stderr. `check-config` validates structure without contacting sources.
 
-The default build serves only the streaming REST API:
+The default native Cargo build serves only the streaming REST API:
 
 ```sh
 export NEURA_API_TOKEN="$(openssl rand -hex 32)"
@@ -44,7 +44,7 @@ curl http://127.0.0.1:8080/v1/query \
   -d '{"sql":"SELECT 1"}'
 ```
 
-PostgreSQL **source reads** do not require a PostgreSQL-wire **listener**. The listener and its protocol dependency are excluded from default builds. Keep it only when using Cube’s existing PostgreSQL driver or SQL clients: build with `--features postgres-wire` and configure `server.pg_addr` ([example](examples/wire.toml)). Without that feature, a configured PG listener fails validation rather than being silently ignored. REST or the Rust API is the intended CompanyBrain integration boundary.
+PostgreSQL **source reads** do not require a PostgreSQL-wire **listener**. The Docker image includes listener support, disabled until `server.pg_addr` is configured ([example](examples/wire.toml)). Native Cargo builds keep the protocol dependency optional: add `--features postgres-wire` when using Cube’s PostgreSQL driver or SQL clients. Without that feature, a configured PG listener fails validation rather than being silently ignored. REST or the Rust API is the intended CompanyBrain integration boundary.
 
 Copy and adapt [examples/sources.toml](examples/sources.toml) for all sources, or the standalone [PostgreSQL](examples/postgres.toml) and [ClickHouse](examples/clickhouse.toml) examples. Remote schemas are explicit contracts; unsupported types and invalid casts fail. Secrets are environment references, never literal configuration fields. For non-AWS secrets, `NAME_FILE` can reference a mounted secret file instead of `NAME`; it is read at use time. Use AWS's credential providers for AWS credentials. Do not place production secrets in Git.
 
@@ -70,9 +70,11 @@ scripts/wire-integration.sh
 
 ## Deploy and integrate
 
-Private versioned Docker images and the Cube variant are distributed through
-GHCR. See [private release installation and upgrades](docs/RELEASES.md) for registry
-login, pulling an image and deployment without building from source.
+One private versioned Neura Docker image is distributed through GHCR for Linux
+AMD64 and ARM64. PostgreSQL-wire support is included; enable its listener through
+configuration when needed for Cube or PostgreSQL clients. See
+[private release installation and upgrades](docs/RELEASES.md) for registry login,
+pulling an image and deployment without building from source.
 
 ```sh
 docker build -t neura:0.1.0 .

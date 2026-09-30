@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("image")
     parser.add_argument("version")
-    parser.add_argument("--cube", action="store_true")
+    parser.add_argument("--pg-listener", action="store_true", help="Enable the listener via config and test Cube compatibility")
     parser.add_argument("--revision", default=os.environ.get("GITHUB_SHA"), help="Expected source revision of an existing image")
     args = parser.parse_args()
     assert run("docker", "run", "--rm", args.image, "--version", capture=True) == "neura " + args.version
@@ -55,7 +55,7 @@ def main():
     config = config.replace('endpoint="http://127.0.0.1:59000"', 'endpoint="http://s3:8333"')
     wire = config.replace("[server]", '[server]\npg_addr="0.0.0.0:5433"')
     path = ROOT / "data/release-smoke.toml"
-    path.write_text(wire if args.cube else config)
+    path.write_text(wire if args.pg_listener else config)
     mount = f"{path}:/etc/neura/neura.toml:ro"
     cli = run("docker", "run", "--rm", "-v", mount, args.image, "-c", "/etc/neura/neura.toml", "query", "SELECT 1 AS n", capture=True,
               env=os.environ)
@@ -68,10 +68,13 @@ def main():
         "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges:true",
         "--memory=512m", "--memory-swap=512m", "--cpus=2", "--pids-limit=256",
         "--tmpfs", "/tmp:size=128m,mode=1777", "-p", "127.0.0.1:58080:8080", "-v", mount]
-    if args.cube:
+    if args.pg_listener:
         command += ["-p", "127.0.0.1:55433:5433"]
-    for key in ("NEURA_TEST_POSTGRES_DSN", "NEURA_API_TOKEN", "NEURA_PG_PASSWORD",
-                "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"):
+    keys = ["NEURA_TEST_POSTGRES_DSN", "NEURA_API_TOKEN",
+            "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"]
+    if args.pg_listener:
+        keys.append("NEURA_PG_PASSWORD")
+    for key in keys:
         command += ["-e", key]
     try:
         run(*command, args.image, env=env)
@@ -87,17 +90,17 @@ def main():
         assert query("SELECT COUNT(*) FROM pg.customers") == [["100"]], "Source RLS changed"
         sql = "SELECT c.region, SUM(o.amount) AS total FROM pg.customers c JOIN lake.orders o ON c.id=o.customer_id GROUP BY c.region ORDER BY c.region"
         assert query(sql) == json.loads((ROOT / "data/expected.json").read_text())["grouped"]
-        if args.cube:
+        if args.pg_listener:
             run("node", "scripts/wire-test.cjs", cwd=ROOT,
                 env={**os.environ, "NODE_PATH": str(ROOT / "target/cube-test/node_modules")})
-        else:
-            rejected = ROOT / "data/release-wire-rejected.toml"
-            rejected.write_text(wire)
-            result = subprocess.run(["docker", "run", "--rm", "-v", f"{rejected}:/etc/neura/neura.toml:ro",
-                args.image, "-c", "/etc/neura/neura.toml", "check-config"], capture_output=True, text=True)
-            assert result.returncode != 0 and "postgres-wire" in result.stderr, "Default image must reject an unavailable PG listener"
+        # Inspect sockets inside the container: a missing host port mapping alone
+        # would not prove that the listener is disabled.
+        sockets = run("docker", "exec", name, "cat", "/proc/net/tcp", "/proc/net/tcp6", capture=True)
+        listening = any(len(fields) > 3 and fields[1].endswith(":1539") and fields[3] == "0A"
+                        for fields in (line.split() for line in sockets.splitlines()))
+        assert listening == args.pg_listener, "PG listener does not match optional configuration"
         assert json.loads(run("docker", "inspect", name, capture=True))[0]["State"]["Running"]
-        print("PASS: packaged version, labels, CLI, non-root REST, auth, RLS, federation" + (", Cube" if args.cube else ", feature isolation"))
+        print("PASS: packaged version, labels, CLI, non-root REST, auth, RLS, federation" + (", Cube" if args.pg_listener else ", PG listener disabled without a PG password"))
     finally:
         subprocess.run(["docker", "logs", "--tail", "30", name], check=False)
         subprocess.run(["docker", "rm", "-f", name], check=False)

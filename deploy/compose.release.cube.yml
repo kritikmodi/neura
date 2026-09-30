@@ -1,5 +1,5 @@
+# Optional listener port mapping for the same released Neura image.
 # Use with compose.release.yml and configure server.pg_addr="0.0.0.0:5433".
 services:
   neura:
-    image: ${NEURA_IMAGE:-ghcr.io/kritikmodi/neura:0.1.0-alpha.1-cube}
     ports: ["127.0.0.1:5433:5433"]

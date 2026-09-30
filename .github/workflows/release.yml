@@ -82,18 +82,22 @@ jobs:
           password: ${{ github.token }}
       # Staging tags stay private. Versioned release tags are created only after
       # all unit/integration tests and both native architecture smoke tests pass.
-      - name: Build and stage standard image
-        id: core
+      - name: Build and stage Neura image
+        id: image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           platforms: linux/${{ matrix.arch }}
           push: true
           tags: ghcr.io/kritikmodi/neura:build-${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=neura-${{ matrix.arch }}-core
-          cache-to: type=gha,scope=neura-${{ matrix.arch }}-core,mode=max
+          cache-from: |
+            type=gha,scope=neura-${{ matrix.arch }}
+            type=gha,scope=neura-${{ matrix.arch }}-cube
+            type=gha,scope=neura-${{ matrix.arch }}-core
+          cache-to: type=gha,scope=neura-${{ matrix.arch }},mode=max
           build-args: |
             CARGO_BUILD_JOBS=2
+            CARGO_FEATURES=postgres-wire
             NEURA_VERSION=${{ env.VERSION }}
             NEURA_REVISION=${{ github.sha }}
           provenance: mode=min
@@ -111,54 +115,28 @@ jobs:
           docker compose -f deploy/compose.test.yml up -d --wait postgres s3
           .venv/bin/uv run --with pyarrow==21.0.0 --with boto3==1.40.40 scripts/seed.py
           npm install --prefix target/cube-test --no-audit --no-fund @cubejs-backend/postgres-driver@1.6.57 pg@8.16.3
-      - name: Test published standard image by digest
+      - name: Test the same image with the PG listener disabled and enabled
         env:
-          DIGEST: ${{ steps.core.outputs.digest }}
+          DIGEST: ${{ steps.image.outputs.digest }}
         run: |
           docker pull "$IMAGE@$DIGEST"
           source scripts/test-env.sh
           python3 scripts/release-smoke.py "$IMAGE@$DIGEST" "$VERSION"
-      - name: Build and stage Cube image
-        id: cube
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          platforms: linux/${{ matrix.arch }}
-          push: true
-          tags: ghcr.io/kritikmodi/neura:build-${{ github.sha }}-${{ matrix.arch }}-cube
-          cache-from: |
-            type=gha,scope=neura-${{ matrix.arch }}-core
-            type=gha,scope=neura-${{ matrix.arch }}-cube
-          cache-to: type=gha,scope=neura-${{ matrix.arch }}-cube,mode=max
-          build-args: |
-            CARGO_BUILD_JOBS=2
-            CARGO_FEATURES=postgres-wire
-            NEURA_VERSION=${{ env.VERSION }}
-            NEURA_REVISION=${{ github.sha }}
-          provenance: mode=min
-          sbom: true
-      - name: Test published Cube image by digest
+          python3 scripts/release-smoke.py "$IMAGE@$DIGEST" "$VERSION" --pg-listener
+      - name: Record validated digest
         env:
-          DIGEST: ${{ steps.cube.outputs.digest }}
-        run: |
-          docker pull "$IMAGE@$DIGEST"
-          source scripts/test-env.sh
-          python3 scripts/release-smoke.py "$IMAGE@$DIGEST" "$VERSION" --cube
-      - name: Record validated digests
-        env:
-          CORE_DIGEST: ${{ steps.core.outputs.digest }}
-          CUBE_DIGEST: ${{ steps.cube.outputs.digest }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 scripts/release-privacy.py --require-package --tag "build-$GITHUB_SHA-$ARCH-cube"
+          python3 scripts/release-privacy.py --require-package --tag "build-$GITHUB_SHA-$ARCH"
           mkdir -p release-digests
-          python3 - <<'PY'
+          python3 - <<'PYTHON'
           import json, os
           from pathlib import Path
           Path('release-digests/' + os.environ['ARCH'] + '.json').write_text(json.dumps({
               'arch': os.environ['ARCH'], 'version': os.environ['VERSION'], 'commit': os.environ['GITHUB_SHA'],
-              'standard': os.environ['CORE_DIGEST'], 'cube': os.environ['CUBE_DIGEST']}, indent=2))
-          PY
+              'digest': os.environ['IMAGE_DIGEST']}, indent=2))
+          PYTHON
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: digests-${{ matrix.arch }}

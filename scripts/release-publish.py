@@ -20,30 +20,30 @@ def main():
     records = [json.loads(Path(f"release-digests/{arch}.json").read_text()) for arch in ("amd64", "arm64")]
     for arch, record in zip(("amd64", "arm64"), records):
         assert record["arch"] == arch and record["version"] == version and record["commit"] == commit
-        assert all(re.fullmatch(r"sha256:[a-f0-9]{64}", record[k]) for k in ("standard", "cube"))
-    manifest = {"version": version, "commit": commit, "images": {}, "validated_architectures": records}
+        assert re.fullmatch(r"sha256:[a-f0-9]{64}", record["digest"])
+    manifest = {"version": version, "commit": commit, "image": {}, "validated_architectures": records}
     notes = [f"# Neura {version}", "", f"Private Docker alpha built from `{commit}`.", "",
-             "Both images support Linux AMD64 and ARM64. Registry login is required.", ""]
-    for variant, suffix in (("standard", ""), ("cube", "-cube")):
-        tag = image + ":" + version + suffix
-        refs = [image + "@" + r[variant] for r in records]
-        subprocess.run(["docker", "buildx", "imagetools", "create", "--tag", tag, *refs], check=True)
-        raw = subprocess.check_output(["docker", "buildx", "imagetools", "inspect", "--raw", tag])
-        index = json.loads(raw)
-        platforms = {m.get("platform", {}).get("architecture") for m in index["manifests"] if m.get("platform", {}).get("os") == "linux"}
-        assert platforms == {"amd64", "arm64"}, platforms
-        # Registry digest is obtained from inspect, rather than hashing potentially
-        # re-formatted JSON emitted by a CLI.
-        inspected = run("docker", "buildx", "imagetools", "inspect", tag)
-        digest = next(line.split()[1] for line in inspected.splitlines() if line.startswith("Digest:"))
-        assert re.fullmatch(r"sha256:[a-f0-9]{64}", digest)
-        subprocess.run(["docker", "pull", image + "@" + digest], check=True)
-        assert run("docker", "run", "--rm", image + "@" + digest, "--version") == "neura " + version
-        subprocess.run(["python3", "scripts/release-privacy.py", "--require-package", "--tag", version + suffix], check=True)
-        manifest["images"][variant] = {"tag": tag, "digest": digest, "platforms": sorted(platforms)}
-        notes += [f"- `{tag}`", f"  - Immutable reference: `{image}@{digest}`"]
+             "One Neura image supports Linux AMD64 and ARM64. Registry login is required.", ""]
+    tag = image + ":" + version
+    refs = [image + "@" + r["digest"] for r in records]
+    subprocess.run(["docker", "buildx", "imagetools", "create", "--tag", tag, *refs], check=True)
+    raw = subprocess.check_output(["docker", "buildx", "imagetools", "inspect", "--raw", tag])
+    index = json.loads(raw)
+    platforms = {m.get("platform", {}).get("architecture") for m in index["manifests"] if m.get("platform", {}).get("os") == "linux"}
+    assert platforms == {"amd64", "arm64"}, platforms
+    # Registry digest is obtained from inspect, rather than hashing potentially
+    # re-formatted JSON emitted by a CLI.
+    inspected = run("docker", "buildx", "imagetools", "inspect", tag)
+    digest = next(line.split()[1] for line in inspected.splitlines() if line.startswith("Digest:"))
+    assert re.fullmatch(r"sha256:[a-f0-9]{64}", digest)
+    subprocess.run(["docker", "pull", image + "@" + digest], check=True)
+    assert run("docker", "run", "--rm", image + "@" + digest, "--version") == "neura " + version
+    subprocess.run(["python3", "scripts/release-privacy.py", "--require-package", "--tag", version], check=True)
+    manifest["image"] = {"tag": tag, "digest": digest, "platforms": sorted(platforms)}
+    notes += [f"- `{tag}`", f"  - Immutable reference: `{image}@{digest}`"]
     notes += ["", "Validated: unit/static checks; actual PostgreSQL, ClickHouse, S3-compatible and Iceberg integrations;",
               "native AMD64/ARM64 packaged CLI, REST authentication, source RLS, PostgreSQL × S3 federation and Cube driver compatibility.",
+              "The same image is tested with the PostgreSQL listener disabled (default) and enabled through server.pg_addr.",
               "BuildKit provenance and SBOM attestations are attached to the architecture images.", "",
               "Alpha limitations: AWS/Glue, Databricks, Snowflake and BigQuery live acceptance is blocked on credentials.",
               "Iceberg coverage and cross-source snapshot semantics remain bounded; see docs/LIMITATIONS.md.",

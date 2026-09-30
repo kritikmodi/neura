@@ -18,8 +18,10 @@ docker run --rm ghcr.io/kritikmodi/neura:0.1.0-alpha.1 --version
 ```
 
 The multi-platform image selects native Linux AMD64 or ARM64 automatically.
-The standard variant exposes REST. `0.1.0-alpha.1-cube` additionally includes the
-optional PostgreSQL-wire listener. Both include the PostgreSQL source connector.
+The same image serves CLI and REST requests and includes PostgreSQL-wire support.
+The PG listener is disabled by default: omit `server.pg_addr` to keep it off.
+The PostgreSQL source connector is always available, independently of the listener.
+There is no separate Cube image.
 
 Prepare a private `neura.toml` and a mode-0600 environment file containing source
 credential variables and `NEURA_API_TOKEN`. The configuration should include:
@@ -55,9 +57,16 @@ put the volume on a filesystem with an enforced aggregate quota for production.
 Keep `spill_dir` pointed at that volume. Configuration and credentials stay outside
 the image, and the process runs as UID/GID 10001 with a read-only root filesystem.
 
-For Cube, additionally set `server.pg_addr="0.0.0.0:5433"` and provide
-`NEURA_PG_PASSWORD` in the protected environment file. Leave `NEURA_IMAGE` unset
-to use the Cube override's default image, or set it explicitly to a Cube digest.
+For Cube or PostgreSQL clients, add `pg_addr` to the existing `[server]` section:
+
+```toml
+pg_addr = "0.0.0.0:5433"
+```
+
+Provide `NEURA_PG_PASSWORD` in the protected environment file. The Compose override
+below only publishes the optional port; it uses the same image and does not enable
+the listener by itself. Remove `pg_addr` and restart Neura to disable the listener.
+A PG password is unnecessary while the listener is disabled.
 
 ```sh
 docker compose -f deploy/compose.release.yml -f deploy/compose.release.cube.yml up -d
@@ -87,15 +96,16 @@ and a release update restarts the process. Spill files are temporary, not source
 
 The workflow refuses a public repository/package or an already tagged version.
 It runs the existing unit/static and real PostgreSQL, ClickHouse, S3-compatible,
-Iceberg and Cube integration checks. Native AMD64/ARM64 runners build both images
-and test the actual registry digests for version/labels, non-root execution,
-CLI/REST behavior, authorization, RLS, a PostgreSQL × S3 join and Cube compatibility.
+Iceberg and Cube integration checks. Native AMD64/ARM64 runners each build one
+Neura image and test its actual registry digest with the listener disabled and
+enabled. Checks cover version/labels, non-root execution, CLI/REST behavior,
+authorization, RLS, a PostgreSQL × S3 join and Cube compatibility.
 No cloud credentials are required by this alpha pipeline; live AWS/Glue,
 Databricks, Snowflake and BigQuery acceptance remains explicitly unverified.
 
-Private `build-<commit>-<architecture>[-cube]` staging tags may exist while checks
+Private `build-<commit>-<architecture>` staging tags may exist while checks
 are running or after a failed attempt. They are not released versions. Only after
-all checks succeed does the workflow create multi-platform version tags and a
+all checks succeed does the workflow create the multi-platform version tag and a
 private GitHub prerelease. There is no moving `latest` tag. BuildKit attaches SBOM
 and minimal build-provenance attestations without publishing to a public
 transparency log. The release includes image digests and a checksummed manifest.
