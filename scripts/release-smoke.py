@@ -45,6 +45,7 @@ def main():
     assert info["Config"]["User"] == "10001:10001"
     assert info["Config"]["Labels"]["org.opencontainers.image.version"] == args.version
     assert info["Config"]["Labels"]["org.opencontainers.image.revision"] == os.environ["GITHUB_SHA"]
+    assert info["Config"]["Labels"]["org.opencontainers.image.source"] == "https://github.com/kritikmodi/neura"
     name = "neura-release-smoke"
     existing = subprocess.run(["docker", "inspect", name], capture_output=True)
     assert existing.returncode != 0, "Refusing to replace an existing test container"

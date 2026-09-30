@@ -90,6 +90,8 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           push: true
           tags: ghcr.io/kritikmodi/neura:build-${{ github.sha }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=neura-${{ matrix.arch }}-core
+          cache-to: type=gha,scope=neura-${{ matrix.arch }}-core,mode=max
           build-args: |
             CARGO_BUILD_JOBS=2
             NEURA_VERSION=${{ env.VERSION }}
@@ -124,6 +126,10 @@ jobs:
           platforms: linux/${{ matrix.arch }}
           push: true
           tags: ghcr.io/kritikmodi/neura:build-${{ github.sha }}-${{ matrix.arch }}-cube
+          cache-from: |
+            type=gha,scope=neura-${{ matrix.arch }}-core
+            type=gha,scope=neura-${{ matrix.arch }}-cube
+          cache-to: type=gha,scope=neura-${{ matrix.arch }}-cube,mode=max
           build-args: |
             CARGO_BUILD_JOBS=2
             CARGO_FEATURES=postgres-wire
