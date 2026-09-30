@@ -39,12 +39,13 @@ def main():
     parser.add_argument("image")
     parser.add_argument("version")
     parser.add_argument("--cube", action="store_true")
+    parser.add_argument("--revision", default=os.environ.get("GITHUB_SHA"), help="Expected source revision of an existing image")
     args = parser.parse_args()
     assert run("docker", "run", "--rm", args.image, "--version", capture=True) == "neura " + args.version
     info = json.loads(run("docker", "image", "inspect", args.image, capture=True))[0]
     assert info["Config"]["User"] == "10001:10001"
     assert info["Config"]["Labels"]["org.opencontainers.image.version"] == args.version
-    assert info["Config"]["Labels"]["org.opencontainers.image.revision"] == os.environ["GITHUB_SHA"]
+    assert args.revision and info["Config"]["Labels"]["org.opencontainers.image.revision"] == args.revision
     assert info["Config"]["Labels"]["org.opencontainers.image.source"] == "https://github.com/kritikmodi/neura"
     name = "neura-release-smoke"
     existing = subprocess.run(["docker", "inspect", name], capture_output=True)

@@ -1,0 +1,64 @@
+name: Verify existing private images
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Full source commit used in private build tags
+        required: true
+        type: string
+      version:
+        description: Expected executable version
+        required: true
+        type: string
+permissions:
+  contents: read
+  packages: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    env:
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      VERSION: ${{ inputs.version }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Validate private destination and image coordinates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          assert re.fullmatch(r'[a-f0-9]{40}', os.environ['SOURCE_COMMIT'])
+          assert re.fullmatch(r'\d+\.\d+\.\d+-alpha\.\d+', os.environ['VERSION'])
+          PY
+          python3 scripts/release-privacy.py --require-package --tag "build-$SOURCE_COMMIT-$ARCH"
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Test the existing standard image on its native architecture
+        run: |
+          mkdir -p data
+          python3 -m venv .venv
+          .venv/bin/pip install uv==0.8.22
+          docker compose -f deploy/compose.test.yml up -d --wait postgres s3
+          .venv/bin/uv run --with pyarrow==21.0.0 --with boto3==1.40.40 scripts/seed.py
+          image="ghcr.io/kritikmodi/neura:build-$SOURCE_COMMIT-$ARCH"
+          docker pull "$image"
+          source scripts/test-env.sh
+          python3 scripts/release-smoke.py "$image" "$VERSION" --revision "$SOURCE_COMMIT"
+      - name: Stop only this job's fixtures
+        if: always()
+        run: docker compose -f deploy/compose.test.yml down
